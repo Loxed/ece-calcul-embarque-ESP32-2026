@@ -13,6 +13,8 @@ ISR(PCINT0_vect) {
 }
 
 void setup() {
+    Serial.begin(9600);
+    
     pinMode(LED, OUTPUT);
     pinMode(BUTTON, INPUT_PULLUP);
 
@@ -28,9 +30,5 @@ void loop() {
     // La boucle principale effectue une autre tâche.
     // Elle peut être interrompue à tout moment si le bouton est pressé.
 
-    digitalWrite(LED, HIGH);
-    delay(1000);
-
-    digitalWrite(LED, LOW);
-    delay(1000);
+    Serial.println("Bonjour :)");
 }
