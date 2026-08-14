@@ -9,6 +9,8 @@ const int BUTTON = 8;
 bool previousButtonState = HIGH;
 
 void setup() {
+    Serial.begin(9600);
+    
     pinMode(LED, OUTPUT);
     pinMode(BUTTON, INPUT_PULLUP);
 }
@@ -30,11 +32,6 @@ void loop() {
     // Mémorise l'état actuel pour le prochain tour de boucle.
     previousButtonState = buttonState;
 
-
     // La boucle principale effectue également une autre tâche.
-    digitalWrite(LED, HIGH);
-    delay(1000);
-
-    digitalWrite(LED, LOW);
-    delay(1000);
+    Serial.println("Bonjour :)");
 }
