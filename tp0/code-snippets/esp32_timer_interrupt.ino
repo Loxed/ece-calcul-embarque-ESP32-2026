@@ -20,7 +20,7 @@ void setup() {
     // Timer à 1 MHz
     // 1 tick = 1 microseconde
     timerPing = timerBegin(1000000);
-
+    
     // Appelle ping() lorsque le timer arrive à 1 seconde
     timerAttachInterrupt(timerPing, & ping);
 
