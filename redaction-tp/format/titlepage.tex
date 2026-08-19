@@ -1,0 +1,55 @@
+% % --- Couleurs spécifiques ---
+\definecolor{eceyellow}{rgb}{0.8,0.5,0}       
+\definecolor{ECE}{RGB}{0, 122, 123}       
+
+
+% ---------------------------------------------------------
+% PAGE DE GARDE
+% ---------------------------------------------------------
+\begin{titlepage}
+\title{\vspace{-5em}
+    \begin{figure}[htb]
+        \begin{minipage}[c]{.45\textwidth}
+        \centering \includegraphics[width=\textwidth]{images/ece.png}
+        \end{minipage}
+        \hfill
+        \begin{minipage}[c]{.45\textwidth}
+        \flushright\Large{\textbf{ING 3}\\ Semestre 6}
+        \end{minipage}  
+    \end{figure}
+    \normalsize \textsc{} \\ [1.2cm]
+    \HRule{1.5pt} \\ [0.5cm]
+    \LARGE \textbf{\Large{LIVRET DE TRAVAUX PRATIQUES}\\ \vspace{5mm}
+        \Huge{\textcolor{ECE}{CALCUL EMBARQUÉ}}}
+    \HRule{1.5pt} \\ 
+    \normalsize  \vspace{2mm}
+    \begin{figure}[!h] \centering\includegraphics[width=\textwidth]{images/elec.png}\end{figure}\vspace{0cm}}
+\date{Département Électronique\\
+    ECE - Programme Grande École d'Ingénieurs\\
+    \vspace{1em}
+    \textbf{Version du \DTMtoday}
+}
+\author{}
+\end{titlepage}
+    
+\maketitle
+\thispagestyle{empty}
+
+% ---------------------------------------------------------
+% TABLE DES MATIÈRES
+% ---------------------------------------------------------
+\newpage
+\vspace*{2cm} 
+
+\begin{center}
+    \Huge \textbf{Programme des séances de TP}
+\end{center}
+\vspace{1.5em}
+
+% Cacher TOUT sauf les chapters dans la TOC
+\addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
+
+% Génération de la TOC
+\makeatletter
+\@starttoc{toc}
+\makeatother

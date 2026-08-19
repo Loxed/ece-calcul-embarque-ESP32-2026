@@ -1,0 +1,261 @@
+% tps/tp2_outils_math_ml.tex
+%
+% Convention : % \include{...} pointe vers une ressource externe (script Python,
+% notebook, jeu de données, dépôt) à fournir/héberger séparément. Remplacer
+% le contenu des accolades par le chemin réel ou l'URL correspondante.
+
+\chapter{Outils mathématiques pour le Machine Learning}
+
+\section*{Motivation}
+
+Ce TP fait suite au CM sur les outils mathématiques du Machine Learning et est complémentaire du TD associé, dans lequel sont posées les bases théoriques de la convolution 2D (produit de convolution, notion de noyau, gradient d'une image, etc.). Il se déroule en trois temps : (1)~filtrage d'image par convolution, (2)~construction d'un détecteur de contours, (3)~étude du coût de calcul de ces opérations. Les formules et valeurs de noyaux utiles sont redonnées au fil du TP : l'objectif n'est pas de les redémontrer, mais de les manipuler et d'en observer concrètement les effets.
+
+\begin{imp}
+Ce TP nécessite un environnement Python avec les librairies \texttt{numpy}, \texttt{matplotlib} et \texttt{opencv-python} (\texttt{cv2}). Les images, scripts, dépendances et le guide d'installation sont disponibles sur le dépôt GitHub du Pôle Électronique : % \include{lien-vers-depot-github}.
+\end{imp}
+
+\section{Convolution 2D et filtrage d'image}
+
+\subsection{Prise en main de la convolution}
+
+Rappel rapide (le détail formel est vu en TD) : une convolution 2D fait glisser un noyau (une petite matrice, typiquement $3\times3$ ou $5\times5$) sur toute l'image ; à chaque position, le pixel de sortie est la somme pondérée des pixels voisins par les coefficients du noyau. Sur les bords de l'image, le noyau déborde : selon l'implémentation, ces pixels sont soit ignorés (l'image de sortie est légèrement plus petite), soit complétés par du remplissage (\emph{padding}, souvent des zéros).
+
+Une grille de lecture utile pour interpréter un noyau sans le recalculer :
+\begin{itemize}
+    \item coefficients tous positifs, de somme $\approx 1$ $\rightarrow$ effet de lissage / flou (moyenne pondérée du voisinage) ;
+    \item coefficients de somme $\approx 0$, avec des signes opposés $\rightarrow$ effet de détection de variation (contour, ligne) ;
+    \item un coefficient central dominant entouré de coefficients négatifs, de somme $\approx 1$ $\rightarrow$ effet d'accentuation (netteté).
+\end{itemize}
+
+On s'appuiera sur cette grille tout au long de la partie~1.
+
+% \include{code/tp2/convolution2D.py}
+
+\EQ{Exécuter le script fourni. Identifier l'image de départ et l'image obtenue en sortie, et confirmer le résultat en analysant le code : que fait la fonction de convolution appelée ?}
+
+\EQ{Écrire le noyau utilisé par défaut dans le script sous forme de matrice. À l'aide de la grille de lecture ci-dessus, à quelle famille appartient-il et quel type de caractéristique est-il censé extraire ? Le résultat observé confirme-t-il cette hypothèse ?}
+
+\begin{imp}
+Selon les librairies, l'opération implémentée peut en réalité correspondre à une corrélation croisée (noyau non retourné) plutôt qu'à une convolution au sens strict. Le TD précise la différence formelle entre les deux ; pour ce TP, il suffit de vérifier empiriquement si le noyau utilisé est symétrique, auquel cas la distinction n'a pas d'incidence sur le résultat.
+\end{imp}
+
+\subsection{Étude de différents filtres}
+
+Trois filtres de référence, à connaître :
+
+\[
+\text{Moyenneur} 3\times3 : \quad
+\frac{1}{9}\begin{pmatrix}1&1&1\\1&1&1\\1&1&1\end{pmatrix}
+\qquad
+\text{Gaussien} 3\times3 : \quad
+\frac{1}{16}\begin{pmatrix}1&2&1\\2&4&2\\1&2&1\end{pmatrix}
+\]
+
+Dans les deux cas, la somme des coefficients vaut 1 : la luminosité moyenne de l'image est préservée. La différence est dans la répartition des poids : uniforme pour le moyenneur, décroissante avec la distance au centre pour le gaussien (approximation d'une gaussienne 2D, dont la formule exacte et le paramètre $\sigma$ sont vus en TD).
+
+\EQ{Appliquer le filtre moyenneur $3\times3$ ci-dessus, puis un moyenneur $7\times7$ (même principe, coefficients $1/49$). Observer l'effet du flou obtenu et l'influence de la taille du noyau sur le résultat.}
+
+\EQ{Appliquer le filtre gaussien $3\times3$ ci-dessus (ou \texttt{cv2.GaussianBlur}). Comparer visuellement avec le moyenneur de même taille : quelles différences observe-t-on sur le rendu des contours de l'image floutée ?}
+
+Pour l'effet inverse (accentuer plutôt que flouter), un choix courant de noyau "piqué" (sharpening) est :
+
+\[
+\begin{pmatrix}0&-1&0\\-1&5&-1\\0&-1&0\end{pmatrix}
+\]
+
+Il peut se lire comme "image d'origine + différence avec une version floutée, amplifiée" : la somme des coefficients vaut également 1.
+
+\EQ{Appliquer ce noyau de netteté et commenter le résultat.}
+
+\begin{question}
+Faire varier l'intensité du filtre de netteté en augmentant le coefficient central (5, puis 7, puis 9 par exemple, en ajustant les coefficients négatifs pour garder une somme totale de 1). À partir de quel moment le résultat devient-il visuellement dégradé (halos autour des contours, bruit amplifié) ? Faire le lien avec la grille de lecture de la partie~1.1 : que se passe-t-il quand on s'éloigne trop d'une somme de coefficients égale à 1 ?
+\end{question}
+
+\begin{shortcut}
+Si le temps le permet, reprendre cette étude sur une image personnelle pour vérifier la robustesse des filtres construits.
+\end{shortcut}
+
+\subsection{Détection de lignes}
+
+Les masques ci-dessous (classiques en traitement d'image) permettent d'extraire des lignes fines selon une orientation donnée. Chacun a une somme de coefficients nulle : conformément à la grille de lecture de la partie~1.1, ils répondent fortement là où l'intensité varie selon leur orientation, et sont proches de zéro ailleurs.
+
+\[
+\text{Horizontale} : \begin{pmatrix}-1&-1&-1\\2&2&2\\-1&-1&-1\end{pmatrix}
+\qquad
+\text{Verticale} : \begin{pmatrix}-1&2&-1\\-1&2&-1\\-1&2&-1\end{pmatrix}
+\]
+
+\EQ{Appliquer le masque horizontal, puis le masque vertical, sur l'image de travail. Le résultat correspond-il à ce qu'on attend ?}
+
+Pour les diagonales, un premier réflexe naïf consiste à ne placer des poids que sur la diagonale elle-même et des zéros ailleurs, par exemple pour la diagonale à 45° vers la droite :
+
+\[
+K_{\text{naïf}}=\begin{pmatrix}0&0&2\\0&2&0\\2&0&0\end{pmatrix}
+\]
+
+\EQ{Appliquer $K_{\text{naïf}}$ et observer le résultat. Le noyau extrait-il bien la diagonale, et seulement elle ?}
+
+\begin{question}
+En s'inspirant des masques horizontal/vertical ci-dessus (somme nulle plutôt que noyau creux), remplacer les zéros de $K_{\text{naïf}}$ par des $-1$ pour obtenir
+\[
+K_{45^\circ}=\begin{pmatrix}-1&-1&2\\-1&2&-1\\2&-1&-1\end{pmatrix}.
+\]
+Comparer le résultat à celui de $K_{\text{naïf}}$. Pourquoi le fait d'avoir une somme nulle améliore-t-il la sélectivité du détecteur ?
+\end{question}
+
+\EQ{Construire par symétrie le noyau $K_{-45^\circ}$ détectant les diagonales vers la gauche, et l'appliquer.}
+
+\section{Détection de contours}
+
+\subsection{Construction d'un détecteur de contours}
+
+On assemble ici, étape par étape, un détecteur de contours "maison" : niveaux de gris $\rightarrow$ flou gaussien $\rightarrow$ gradient de Sobel $\rightarrow$ norme du gradient $\rightarrow$ seuillage.
+
+\EQ{Convertir l'image en niveaux de gris (\texttt{cv2.cvtColor}). Pourquoi cette étape est-elle nécessaire avant de calculer un gradient d'intensité ?}
+
+\EQ{Appliquer un flou gaussien (partie~1.2) avant de calculer le gradient. Émettre une hypothèse sur son utilité ; elle sera vérifiée en section~\ref{sec:bruit}.}
+
+Les noyaux de Sobel approximent respectivement le gradient horizontal $G_x$ et vertical $G_y$ de l'image :
+
+\[
+G_x=\begin{pmatrix}-1&0&1\\-2&0&2\\-1&0&1\end{pmatrix}
+\qquad
+G_y=\begin{pmatrix}-1&-2&-1\\0&0&0\\1&2&1\end{pmatrix}
+\]
+
+La norme du gradient en chaque pixel se calcule ensuite par $\lVert G\rVert=\sqrt{G_x^2+G_y^2}$ (ou, moins coûteux mais moins précis, $\lVert G\rVert\approx|G_x|+|G_y|$).
+
+\EQ{Convoluer l'image (floutée, en niveaux de gris) par $G_x$ et par $G_y$, puis calculer la norme du gradient en chaque pixel.}
+
+\EQ{Seuiller l'image de norme de gradient pour obtenir une carte binaire des contours (un pixel est un contour si sa norme dépasse le seuil). Partir d'un seuil correspondant à 10-30\,\% de la valeur maximale de la norme, puis ajuster. Discuter du compromis entre bruit résiduel (seuil trop bas) et contours manqués (seuil trop haut).}
+
+\subsection{Comparaison avec OpenCV}
+
+\texttt{cv2.Canny()} réutilise le même principe de gradient (de type Sobel) mais y ajoute deux étapes qui expliquent la différence de rendu : une suppression des non-maxima le long de la direction du gradient (les contours sont amincis à 1 pixel de large), puis un seuillage par hystérésis à deux seuils (les pixels au-dessus du seuil haut sont conservés d'office, ceux entre les deux seuils ne sont conservés que s'ils sont connectés à un contour déjà retenu).
+
+\EQ{Appliquer \texttt{cv2.Canny()} sur la même image et comparer visuellement le résultat avec le détecteur construit à la main.}
+
+\EQ{Faire varier les deux seuils de \texttt{cv2.Canny()} (par exemple 50/150, puis 10/50, puis 150/250). Retrouve-t-on, en les faisant varier séparément, le rôle du seuil bas et du seuil haut décrit ci-dessus ?}
+
+\subsection{Influence du bruit}
+\label{sec:bruit}
+
+Une opération de dérivation (comme le gradient) amplifie les hautes fréquences de l'image, dont le bruit fait partie : c'est pour cela qu'on floute avant de dériver.
+
+\EQ{Ajouter un bruit gaussien synthétique à l'image (par exemple \texttt{image + numpy.random.normal(0, sigma, image.shape)}, avec $\sigma$ de l'ordre de 5 à 20 sur une image codée en 0--255).}
+
+\EQ{Appliquer le détecteur de contours de la partie~2.1 directement sur l'image bruitée en sautant l'étape de flou gaussien, puis en la conservant. Comparer les deux cartes de contours obtenues.}
+
+\begin{question}
+Faire varier le niveau de bruit $\sigma$ ainsi que la taille du noyau gaussien utilisé pour le lissage. Quel compromis observe-t-on entre suppression du bruit et perte de détail sur les contours fins ?
+\end{question}
+
+\begin{shortcut}
+Flou gaussien puis calcul du gradient sont deux convolutions successives. Comme la convolution est associative (vu en TD), convoluer d'abord le noyau gaussien avec $G_x$ (respectivement $G_y$) donne directement un unique noyau "dérivée de gaussienne", qui peut ensuite être appliqué à l'image en une seule convolution au lieu de deux. Construire ce noyau combiné et vérifier que le résultat obtenu est identique à celui de la partie~2.1. Combien de convolutions cela permet-il d'économiser par pixel ? Ce résultat sera réexploité en section~\ref{sec:tinyml}.
+\end{shortcut}
+
+\section{Étude des performances}
+
+\subsection{Implémentation de la convolution}
+
+Une convolution 2D "naïve" s'implémente avec quatre boucles imbriquées : deux pour parcourir les pixels de l'image de sortie, deux pour parcourir les coefficients du noyau à accumuler. Pour simplifier, on pourra se limiter aux positions où le noyau est entièrement contenu dans l'image (l'image de sortie est alors légèrement plus petite que l'image d'entrée, de $\lfloor k/2\rfloor$ pixels de chaque côté pour un noyau $k\times k$), plutôt que de gérer le remplissage des bords.
+
+% \include{code/tp2/convolution_naive.py}
+
+\EQ{Implémenter cette fonction de convolution 2D "naïve" en Python pur, à partir du squelette fourni.}
+
+\EQ{Comparer le résultat obtenu avec celui de \texttt{cv2.filter2D()} sur une même image et un même noyau (par exemple par la différence pixel à pixel maximale entre les deux résultats). Les résultats sont-ils identiques aux erreurs d'arrondi près ?}
+
+\begin{shortcut}
+Pour un noyau séparable (moyenneur, gaussien), la convolution 2D peut se décomposer en deux convolutions 1D successives (une ligne, une colonne) : c'est le cas car ces noyaux s'écrivent comme le produit extérieur de deux vecteurs. Implémenter cette version "séparable", vérifier que le résultat est identique à la version 2D complète, et comparer le nombre d'opérations réalisées par pixel : $k^2$ pour la version 2D contre $2k$ pour la version séparée (pour un noyau $k\times k$). Cette idée de décomposition sera retrouvée sous une autre forme en section~\ref{sec:tinyml}.
+\end{shortcut}
+
+\subsection{Influence de la taille des données}
+
+Pour une image de $H\times W$ pixels et un noyau $k\times k$, le nombre d'opérations d'une convolution naïve est de l'ordre de $H\times W\times k^2$ : linéaire en la taille de l'image, quadratique en la taille du noyau.
+
+\EQ{Mesurer le temps d'exécution de la convolution naïve (\texttt{time.time()} ou \texttt{timeit}) pour des images de tailles croissantes ($64\times64$, $256\times256$, $1024\times1024$), à noyau fixé (par exemple $5\times5$). Tracer le temps en fonction de la taille de l'image.}
+
+\EQ{Mesurer le temps d'exécution pour des noyaux de tailles croissantes ($3\times3$, $5\times5$, $7\times7$, $15\times15$), à image fixée. Tracer le temps en fonction de la taille du noyau.}
+
+\begin{question}
+Ces mesures sont-elles cohérentes avec la formule $H\times W\times k^2$ donnée ci-dessus (croissance linéaire avec la taille de l'image, quadratique avec la taille du noyau) ?
+\end{question}
+
+\subsection{Analyse pour le calcul embarqué}
+
+Ordres de grandeur à titre indicatif (à ajuster selon la cible réelle utilisée en projet) : une caméra embarquée basse résolution fournit souvent des images de l'ordre de $160\times120$ pixels ; un microcontrôleur de type Cortex-M4 sans accélération matérielle réalise typiquement de l'ordre de quelques dizaines de millions d'opérations multiplication-accumulation (MAC) par seconde.
+
+\EQ{À l'aide de la formule $H\times W\times k^2$, estimer le nombre d'opérations MAC nécessaires pour convoluer une image $160\times120$ par un noyau $5\times5$.}
+
+\EQ{En déduire un ordre de grandeur du temps de calcul sur la cible indiquée ci-dessus, puis conclure : un traitement vidéo temps réel (par exemple 15 images/s) est-il envisageable avec l'implémentation naïve ?}
+
+\begin{question}
+Au-delà du temps de calcul, quelles autres contraintes doit-on prendre en compte pour exécuter ce type de traitement sur un système embarqué (mémoire disponible pour stocker image et résultats intermédiaires, présence ou non d'une unité de calcul flottant, consommation énergétique) ?
+\end{question}
+
+\begin{imp}
+En pratique, on n'implémente presque jamais une convolution "naïve" sur cible embarquée : on utilise des librairies optimisées pour le matériel visé (par exemple CMSIS-NN sur c\oe urs ARM Cortex-M), on exploite la séparabilité des noyaux quand elle existe (partie~3.1), et les coefficients sont généralement quantifiés en entiers plutôt que représentés en virgule flottante.
+\end{imp}
+
+\subsection{Ouverture vers le TinyML}
+\label{sec:tinyml}
+
+Jusqu'ici, tous les noyaux utilisés ont été choisis "à la main" pour extraire une caractéristique précise (contour, flou, netteté...). Les trois sous-parties suivantes explorent ce qui change lorsque ces noyaux ne sont plus choisis mais appris, et ce que cela implique en termes de coût de calcul pour un déploiement embarqué.
+
+\subsection{De la convolution classique à la convolution CNN}
+
+Contrairement aux filtres manipulés jusqu'ici (une image en niveaux de gris, un seul canal), un noyau de CNN opère sur un volume d'entrée de $C_{in}$ canaux (par exemple 3 pour une image RGB, ou davantage pour une carte de caractéristiques intermédiaire) : le noyau est alors lui-même de dimensions $k\times k\times C_{in}$, et chaque pixel de sortie est la somme sur les $C_{in}$ canaux des convolutions locales. En empilant $C_{out}$ noyaux de ce type, on obtient $C_{out}$ cartes de sortie. Les notions de \emph{stride} (pas de déplacement du noyau) et de \emph{padding} (bordure ajoutée à l'image), vues en TD, permettent de contrôler la taille spatiale de ces cartes de sortie.
+
+% \include{code/tp2/visualisation_kernels_cnn.py}
+
+\EQ{Charger un petit modèle pré-entraîné et visualiser les noyaux de sa première couche de convolution sous forme d'images.}
+
+\begin{question}
+Comparer visuellement ces noyaux appris avec les noyaux construits à la main en partie~1 (moyenneur, Sobel, etc.). Reconnaît-on des structures similaires ?
+\end{question}
+
+\subsection{Réduction du coût de calcul}
+
+Pour une entrée $H\times W\times C_{in}$, un noyau $k\times k$ et $C_{out}$ canaux de sortie, le nombre d'opérations d'une convolution standard (partie~3.4.1) est de l'ordre de
+\[
+N_{\text{standard}}=H\times W\times C_{in}\times C_{out}\times k^2.
+\]
+
+Une convolution \emph{depthwise séparable} (utilisée par exemple dans MobileNet, et en TinyML de façon générale) décompose cette opération en une convolution \emph{depthwise} (un filtre $k\times k$ appliqué indépendamment à chaque canal d'entrée) suivie d'une convolution \emph{pointwise} $1\times1$ (qui recombine les $C_{in}$ canaux en $C_{out}$ canaux) :
+\[
+N_{\text{depthwise}}=
+\underbrace{H\times W\times C_{in}\times k^2}_{\text{étape depthwise}}
++
+\underbrace{H\times W\times C_{in}\times C_{out}}_{\text{étape pointwise}}.
+\]
+
+\EQ{Pour une entrée $112\times112\times32$ ($H=W=112$, $C_{in}=32$), un noyau $3\times3$ et $C_{out}=64$ canaux de sortie, calculer $N_{\text{standard}}$ et $N_{\text{depthwise}}$ à l'aide des formules ci-dessus. Quel est le facteur de réduction obtenu ?}
+
+\begin{shortcut}
+
+À l'aide d'un framework de deep learning (PyTorch ou Keras), instancier une couche de convolution standard et une couche depthwise séparable de mêmes dimensions d'entrée/sortie que l'exercice précédent. Comparer leur nombre de paramètres et leur temps d'exécution mesuré à la valeur attendue par les formules.
+
+% \include{code/tp2/depthwise_vs_standard.py}
+\end{shortcut}
+
+\subsection{Synthèse}
+
+\EQ{Compléter le tableau suivant en une phrase par case, en s'appuyant sur l'ensemble du TP :
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+& Filtrage classique & CNN standard & Depthwise séparable \\
+\hline
+Coût de calcul & & & \\
+\hline
+Besoin de données d'entraînement & & & \\
+\hline
+Flexibilité / adaptabilité & & & \\
+\hline
+Adapté à l'embarqué ? & & & \\
+\hline
+\end{tabular}
+\end{center}
+}

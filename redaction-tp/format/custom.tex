@@ -1,0 +1,98 @@
+\usepackage[skins,most]{tcolorbox}
+\usetikzlibrary{calc,shadows.blur}
+
+% % --- Couleurs spécifiques ---
+\definecolor{eceyellow}{rgb}{0.8,0.5,0}       
+\definecolor{ECE}{RGB}{0, 122, 123}       
+
+% --- Compteurs pour les questions ---
+\newcounter{tqcounter}[chapter] % Réinitialisé à chaque chapitre
+\newcounter{eqcounter}[chapter] % Réinitialisé à chaque chapitre
+
+% IMPORTANT BOX
+\newtcolorbox{imp}{
+    enhanced, arc=0mm, colback=yorhabg, colframe=mred, leftrule=10mm, coltext=yorhafg,
+    after skip=2em,
+    overlay={
+        \node[anchor=west, outer sep=2pt] at (frame.west) {
+            \includegraphics[width=5mm]{images/exclaim.png}
+        };
+    }
+}
+
+% SHORTCUT BOX
+\newtcolorbox{shortcut}{
+    enhanced, arc=0mm, colback=yorhabg, colframe=eceyellow, leftrule=1pt, 
+    coltext=yorhafg, coltitle=mwhite, title=\texttt{Astuce},
+}
+
+% Style commun pour les boîtes de questions
+\tcbset{
+    qboxstyle/.style={
+        enhanced,
+        colback=yorhabg,
+        coltext=yorhafg,
+        coltitle=mwhite,
+        attach boxed title to top left={yshift*=-\tcboxedtitleheight},
+        boxed title size=title,
+        boxed title style={
+            rounded corners=northeast,
+            rounded corners=northwest,
+            colback=tcbcolframe,
+            boxrule=0pt,
+        },
+        underlay boxed title={
+            \path[fill=tcbcolframe] 
+                (title.south west) -- (title.south east) 
+                to[out=0,in=180] ([xshift=5mm]title.east) -- 
+                (title.center-|frame.east) [rounded corners=5pt] |- 
+                (frame.north) -| cycle;
+        },
+        before skip=0.8em,
+        after skip=0.3em,
+    }
+}
+
+% QUESTION BOX (Libre, sans numérotation)
+\newtcolorbox{question}{
+    qboxstyle,
+    colframe=ece,
+    title=\texttt{Question.},
+}
+
+% THÉORIE (Commande \TQ{content})
+\newcommand{\TQ}[1]{%
+    \stepcounter{tqcounter}%
+    \begin{tcolorbox}[qboxstyle, colframe=ECE, title=\textbf{T\arabic{tqcounter}.}]
+        #1
+    \end{tcolorbox}%
+}
+
+% PRATIQUE (Commande \EQ{content})
+\newcommand{\EQ}[1]{%
+    \stepcounter{eqcounter}%
+    \begin{tcolorbox}[qboxstyle, colframe=gamboge, title=\textbf{E\arabic{eqcounter}.}]
+        #1
+    \end{tcolorbox}%
+}
+
+% Macros pédagogiques
+\newcommand{\bb}[1]{\textcolor{yorhafg}{\textbf{#1}}}
+
+% Séparateur TOC
+\newcommand{\TPSection}[1]{%
+    \addtocontents{toc}{\protect\vspace{3em}}%
+    \addtocontents{toc}{\protect\centerline{\LARGE\textbf{\textcolor{ECE}{--- #1 ---}}}}%
+}
+
+
+\usepackage{hyperref}
+
+% Github Repo
+\newcommand{\RepoURL}{https://github.com/Loxed/ece-calcul-embarque-ESP32-2026}
+\newcommand{\RepoBranch}{main}
+
+% Génère un lien vers un fichier du dépôt
+\newcommand{\RepoLink}[2]{%
+    \href{\RepoURL/blob/\RepoBranch/#1}{#2}%
+}
