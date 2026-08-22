@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 /*
  * gpio_three_levels.ino  --  TP0 / SPOT CODE 1
  *
@@ -58,7 +60,12 @@ void setup() {
 
   pinMode(PIN_TEST, OUTPUT);
 
+  // delay of 5 seconds
+  delay(5000);
+
   Serial.println("\n=== Comparaison des trois niveaux (GPIO) ===");
+
+
   mesure("1. digitalWrite()", toggleArduino);
   mesure("2. gpio_set_level()", toggleIdf);
   mesure("3. registres", toggleRegistres);
