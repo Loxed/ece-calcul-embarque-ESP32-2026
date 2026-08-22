@@ -1,0 +1,74 @@
++++
+title = Filtrage FIR
+nav = fir
+summary = true
++++
+
+# Filtrage FIR
+@divider
+
+@callout .warn
+**Page volontairement incomplète.** Le filtrage FIR fait l'objet du **TP 8**. Cette page rassemble les contraintes propres à la carte et les outils disponibles ; elle ne contient pas d'implémentation complète, pour ne pas court-circuiter l'exercice. À compléter selon ce que vous souhaitez rendre public.
+@end callout
+
+## Le piège arithmétique
+@divider
+
+@callout .danger
+Le produit de deux `uint16_t` ne tient pas dans un `uint16_t`. Un échantillon 12 bits multiplié par un coefficient peut dépasser 16 bits dès le premier terme, et l'accumulation sur $M$ coefficients ajoute $\log_2 M$ bits supplémentaires.
+
+Accumulez la convolution dans un **`int32_t`**, puis reconvertissez en 16 bits par décalage une fois la somme terminée.
+@end callout
+
+## Coefficients en virgule fixe
+@divider
+
+Sur une cible sans FPU rapide, les coefficients se codent en entiers avec un facteur d'échelle en puissance de deux :
+
+```c
+// Coefficient réel h, échelle Q15 (facteur 2^15)
+int16_t h_q15 = (int16_t)(h * 32768.0f);
+
+// Après accumulation, ramener à l'échelle d'origine
+int16_t sortie = (int16_t)(accumulateur >> 15);
+```
+
+@callout .info
+L'ESP32-S3 **dispose** d'une FPU simple précision : le calcul en `float` n'est pas disqualifiant, contrairement à un AVR. Le choix virgule fixe / virgule flottante devient une question de mesure, pas de dogme. Mesurez les deux avant de trancher.
+@end callout
+
+## esp-dsp
+@divider
+
+Espressif fournit la bibliothèque **esp-dsp**, optimisée pour l'ESP32-S3 (instructions SIMD du LX7).
+
+```ini
+lib_deps = espressif/esp-dsp@^1.6.0
+```
+
+```sh
+idf.py add-dependency "espressif/esp-dsp"
+```
+
+Fonctions pertinentes : convolution et FIR (`dsps_fir_f32`, `dsps_fird_f32`), FFT radix-2 (`dsps_fft2r_fc32`), fenêtrage (`dsps_wind_hann_f32`), produit scalaire (`dsps_dotprod_f32`).
+
+@callout .ok
+Comparer votre implémentation naïve à `dsps_fir_f32` sur le même jeu de données est un exercice de profilage utile : l'écart mesuré illustre concrètement ce qu'apporte une bibliothèque optimisée, et où se situe réellement le goulot d'étranglement.
+@end callout
+
+## Contraintes de la carte
+@divider
+
+- Le bloc à filtrer vient de l'[acquisition ADC + DMA](adc-dma.mq) : $F_e$ entre 611 Hz et 83 333 Hz.
+- Le tampon de travail doit rester en **SRAM interne** pour un traitement temps réel — voir [Tampons et blocs](buffering.mq).
+- Prévoyez de mesurer le temps de traitement d'un bloc et de le comparer à $N / F_e$. Au-delà, vous perdez des échantillons silencieusement.
+
+## À compléter
+@divider
+
+@dropdown "Éléments à ajouter selon vos choix pédagogiques"
+- Génération des coefficients (Python `scipy.signal.firwin`, ou table fournie)
+- Structure de données du buffer circulaire et gestion des bords de bloc
+- Implémentation de référence et version optimisée
+- Protocole de validation à l'oscilloscope et au GBF
+@end dropdown

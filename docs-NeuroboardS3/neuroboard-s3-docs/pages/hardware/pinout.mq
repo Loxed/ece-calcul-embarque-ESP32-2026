@@ -1,0 +1,85 @@
++++
+title = Brochage
+nav = pinout
+width = full
+summary = true
++++
+
+# Brochage
+@divider
+
+![Brochage de la NeuroBoard-S3](static/images/neuroboard-s3-pinout.png)
+
+Les deux tableaux donnent le **nom** et la **fonction** des broches de chaque côté de la carte. La colonne **Partage** indique le périphérique embarqué qui occupe la broche.
+
+L'ordre est identique à celui de l'ESP32-S3-DevKitC-1, à l'exception des broches 11 à 13 de J3, marquées **NC** puisque GPIO35/36/37 sont consommées par la PSRAM Octal.
+
+@callout .info
+Types : **P** alimentation · **I** entrée · **O** sortie · **T** haute impédance.
+@end callout
+
+## J1
+@divider
+
+| N° | Nom | Type | Fonction | Partage |
+| --: | --- | --- | --- | --- |
+| 1 | 3V3 | P | Alimentation 3,3 V | — |
+| 2 | 3V3 | P | Alimentation 3,3 V | — |
+| 3 | RST | I | EN | — |
+| 4 | 4 | I/O/T | RTC_GPIO4, GPIO4, TOUCH4, ADC1_CH3 | CAM_SIOD |
+| 5 | 5 | I/O/T | RTC_GPIO5, GPIO5, TOUCH5, ADC1_CH4 | CAM_SIOC |
+| 6 | 6 | I/O/T | RTC_GPIO6, GPIO6, TOUCH6, ADC1_CH5 | CAM_VSYNC |
+| 7 | 7 | I/O/T | RTC_GPIO7, GPIO7, TOUCH7, ADC1_CH6 | CAM_HREF |
+| 8 | 15 | I/O/T | RTC_GPIO15, GPIO15, U0RTS, ADC2_CH4, XTAL_32K_P | CAM_D7 |
+| 9 | 16 | I/O/T | RTC_GPIO16, GPIO16, U0CTS, ADC2_CH5, XTAL_32K_N | CAM_XCLK |
+| 10 | 17 | I/O/T | RTC_GPIO17, GPIO17, U1TXD, ADC2_CH6 | CAM_D6 |
+| 11 | 18 | I/O/T | RTC_GPIO18, GPIO18, U1RXD, ADC2_CH7, CLK_OUT3 | CAM_D5 |
+| 12 | 8 | I/O/T | RTC_GPIO8, GPIO8, TOUCH8, ADC1_CH7, SUBSPICS1 | CAM_PCLK |
+| 13 | 3 | I/O/T | RTC_GPIO3, GPIO3, TOUCH3, ADC1_CH2 | strapping |
+| 14 | 46 | I/O/T | GPIO46 | strapping |
+| 15 | 9 | I/O/T | RTC_GPIO9, GPIO9, TOUCH9, ADC1_CH8, FSPIHD | CAM_D4 |
+| 16 | 10 | I/O/T | RTC_GPIO10, GPIO10, TOUCH10, ADC1_CH9, FSPICS0 | CAM_D0 |
+| 17 | 11 | I/O/T | RTC_GPIO11, GPIO11, TOUCH11, ADC2_CH0, FSPID | CAM_D3 |
+| 18 | 12 | I/O/T | RTC_GPIO12, GPIO12, TOUCH12, ADC2_CH1, FSPICLK | CAM_D1 |
+| 19 | 13 | I/O/T | RTC_GPIO13, GPIO13, TOUCH13, ADC2_CH2, FSPIQ | CAM_D2 |
+| 20 | 14 | I/O/T | RTC_GPIO14, GPIO14, TOUCH14, ADC2_CH3, FSPIWP | — |
+| 21 | VIN | P | Entrée d'alimentation 5 V (4,45 V à 5,5 V) | — |
+| 22 | G | G | Masse | — |
+
+## J3
+@divider
+
+| N° | Nom | Type | Fonction | Partage |
+| --: | --- | --- | --- | --- |
+| 1 | G | G | Masse | — |
+| 2 | TX | I/O/T | U0TXD, GPIO43, CLK_OUT1 | — |
+| 3 | RX | I/O/T | U0RXD, GPIO44, CLK_OUT2 | — |
+| 4 | 1 | I/O/T | RTC_GPIO1, GPIO1, TOUCH1, ADC1_CH0 | — |
+| 5 | 2 | I/O/T | RTC_GPIO2, GPIO2, TOUCH2, ADC1_CH1 | — |
+| 6 | 42 | I/O/T | MTMS, GPIO42 | — |
+| 7 | 41 | I/O/T | MTDI, GPIO41, CLK_OUT1 | SD_DAT0 |
+| 8 | 40 | I/O/T | MTDO, GPIO40, CLK_OUT2 | SD_CLK |
+| 9 | 39 | I/O/T | MTCK, GPIO39, CLK_OUT3, SUBSPICS1 | SD_CMD |
+| 10 | 38 | I/O/T | GPIO38, FSPIWP, SUBSPIWP | RGB_LED |
+| 11 | NC | — | Non connectée (GPIO37 utilisée par la PSRAM Octal) | — |
+| 12 | NC | — | Non connectée (GPIO36 utilisée par la PSRAM Octal) | — |
+| 13 | NC | — | Non connectée (GPIO35 utilisée par la PSRAM Octal) | — |
+| 14 | 0 | I/O/T | RTC_GPIO0, GPIO0 | strapping / BOOT |
+| 15 | 45 | I/O/T | GPIO45 | strapping |
+| 16 | 48 | I/O/T | GPIO48, SPICLK_N, SUBSPICLK_N_DIFF | — |
+| 17 | 47 | I/O/T | GPIO47, SPICLK_P, SUBSPICLK_P_DIFF | — |
+| 18 | 21 | I/O/T | RTC_GPIO21, GPIO21 | — |
+| 19 | 20 | I/O/T | RTC_GPIO20, GPIO20, U1CTS, ADC2_CH9, USB_D+ | USB |
+| 20 | 19 | I/O/T | RTC_GPIO19, GPIO19, U1RTS, ADC2_CH8, USB_D− | USB |
+| 21 | G | G | Masse | — |
+| 22 | G | G | Masse | — |
+
+@callout .info
+Contrairement à l'ESP32-S3-DevKitC-1, la LED RGB n'est **pas** sur GPIO48. Elle est sur **GPIO38**, et GPIO48 est une E/S libre.
+@end callout
+
+Pour la description des noms de fonction, voir la [datasheet ESP32-S3](https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf) (PDF).
+
+@actions
+@[Contraintes d'utilisation des broches ➽](constraints.mq){.primary}
+@end actions

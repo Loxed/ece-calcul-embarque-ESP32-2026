@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NeuroBoard S3 — Acquisition ADC + DMA</title>
+
+<meta name="description" content="Carte de développement ESP32-S3 — documentation du module TS, ECE">
+
+<!-- 16x16 and 32x32 PNG favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png">
+
+<!-- Web manifest for PWA support -->
+<link rel="manifest" href="../favicon/site.webmanifest">
+
+<!-- Fallback for .ico (optional) -->
+<link rel="icon" href="../favicon/favicon.ico">
+
+<!-- Stylesheets -->
+<link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="../layout-sidebar.css">
+<link rel="stylesheet" id="mq-theme-stylesheet" href="../theme-rustique.css">
+<script>
+window.__mqThemeConfig = {"canSwitch":true,"defaultTheme":"rustique","pageTheme":"rustique","pageThemeHref":"../theme-rustique.css","storageKey":"mq:theme:neuroboard-s3","themes":{"rustique":{"href":"../theme-rustique.css","label":"Rustique"},"comte":{"href":"../theme-comte.css","label":"Comte"},"elmental":{"href":"../theme-elmental.css","label":"Elmental"},"gouda":{"href":"../theme-gouda.css","label":"Gouda"},"pycorino":{"href":"../theme-pycorino.css","label":"Pycorino"},"rubyola":{"href":"../theme-rubyola.css","label":"Rubyola"},"legacy/mida":{"href":"../theme-legacy-mida.css","label":"Legacy: Mida"}}};
+(function () {
+  var config = window.__mqThemeConfig;
+  if (!config || !config.canSwitch || !config.themes) return;
+
+  var selected = config.pageTheme || config.defaultTheme;
+  try {
+    var stored = window.localStorage && window.localStorage.getItem(config.storageKey);
+    if (stored && config.themes[stored]) selected = stored;
+  } catch (_) {}
+
+  var theme = config.themes[selected];
+  var link = document.getElementById('mq-theme-stylesheet');
+  if (!theme || !theme.href || !link) return;
+
+  link.href = theme.href;
+  link.setAttribute('data-theme-name', selected);
+  document.documentElement.setAttribute('data-mq-theme', selected);
+}());
+</script>
+</head>
+
+<body>
+  <!-- Header -->
+  <nav class="mq-nav">
+  <div class="mq-nav-head">
+    <a class="mq-nav-brand" href="../">NeuroBoard S3</a>
+    <button class="mq-search-toggle" type="button" aria-expanded="false" aria-controls="mq-search" aria-label="Open search" onclick="mqToggleSearch(this)">
+      <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M17 17L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+      <span class="mq-search-toggle-label">Search</span>
+      <span class="mq-search-toggle-shortcut" data-search-shortcut aria-hidden="true" hidden></span>
+    </button>
+    <details class="mq-theme-switcher" data-theme-switcher>
+      <summary class="mq-theme-toggle" aria-label="Change theme">
+        <span class="mq-theme-toggle-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg>
+</span>
+        <span class="mq-theme-toggle-label">Theme</span>
+        <span class="mq-theme-toggle-value" data-theme-current>Rustique</span>
+      </summary>
+      <div class="mq-theme-menu">
+        <label class="mq-theme-field">
+          <span class="mq-theme-field-label">Change Theme</span>
+          <select class="mq-theme-select" data-theme-select aria-label="Choose theme">
+            <option value="rustique" selected>Rustique (Default)</option><option value="comte">Comte</option><option value="elmental">Elmental</option><option value="gouda">Gouda</option><option value="pycorino">Pycorino</option><option value="rubyola">Rubyola</option><option value="legacy/mida">Legacy: Mida</option>
+          </select>
+        </label>
+      </div>
+    </details>
+  </div>
+  <div class="mq-nav-links">
+    <a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../"><span class="mq-nav-num">1.</span>NeuroBoard S3</a><a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../getting-started.html"><span class="mq-nav-num">2.</span>Prise en main</a>
+<div class="mq-nav-heading">Matériel</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../hardware.html"><span class="mq-nav-num">3.</span>Vue d&#39;ensemble</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/pinout.html"><span class="mq-nav-num">3.1</span>Brochage</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/constraints.html"><span class="mq-nav-num">3.2</span>Contraintes des broches</a></div></div>
+<div class="mq-nav-heading">Périphériques</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../peripherals.html"><span class="mq-nav-num">4.</span>Périphériques</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/camera.html"><span class="mq-nav-num">4.1</span>Caméra</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/rgb-led.html"><span class="mq-nav-num">4.2</span>LED RGB</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/microsd.html"><span class="mq-nav-num">4.3</span>Carte microSD</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/boot-button.html"><span class="mq-nav-num">4.4</span>Bouton BOOT</a></div></div>
+<div class="mq-nav-heading">Développement</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../frameworks.html"><span class="mq-nav-num">5.</span>Frameworks</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../frameworks/arduino.html"><span class="mq-nav-num">5.1</span>Arduino-ESP32</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../frameworks/esp-idf.html"><span class="mq-nav-num">5.2</span>ESP-IDF</a></div></div>
+<div class="mq-nav-heading">Exemples</div>
+<div class="mq-nav-group mq-nav-summary-group active"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../examples.html"><span class="mq-nav-num">6.</span>Exemples</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link active" style="--mq-nav-level:1;" href="adc-dma.html"><span class="mq-nav-num">6.1</span>Acquisition ADC + DMA</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="buffering.html"><span class="mq-nav-num">6.2</span>Tampons et blocs</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="fir.html"><span class="mq-nav-num">6.3</span>Filtrage FIR</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="mfcc.html"><span class="mq-nav-num">6.4</span>MFCC</a></div></div>
+<div class="mq-nav-heading">Référence</div>
+<a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../resources.html"><span class="mq-nav-num">7.</span>Ressources</a>
+  </div>
+  <div class="mq-nav-actions">
+    <button class="mq-nav-toggle" type="button" aria-expanded="false" aria-label="Toggle navigation" onclick="mqToggleNav(this)">☰</button>
+  </div>
+</nav>
+
+
+  <!-- Search Container -->
+  <div class="mq-search" id="mq-search" hidden aria-hidden="true">
+  <button class="mq-search-backdrop" type="button" aria-label="Close search" onclick="mqCloseSearch()"></button>
+  <section class="mq-search-panel" role="dialog" aria-modal="true" aria-labelledby="mq-search-title">
+    <div class="mq-search-head">
+      <svg class="mq-search-panel-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.5-3.5"></path>
+      </svg>
+      <label class="mq-search-input-wrap" for="mq-search-input">
+        <span class="mq-search-label" id="mq-search-title">Search this site</span>
+        <input id="mq-search-input" class="mq-search-input" type="search" placeholder="Search pages, headings, and content" autocomplete="off" spellcheck="false">
+      </label>
+      <button class="mq-search-close" type="button" aria-label="Close search" onclick="mqCloseSearch()">
+        <svg class="mq-search-close-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+        <span class="mq-search-close-label">Close</span>
+        <span class="mq-search-close-hint" data-search-close-hint aria-hidden="true" hidden></span>
+      </button>
+    </div>
+    <p class="mq-search-meta" id="mq-search-meta">Type to search titles, headings, and page content.</p>
+    <div class="mq-search-results" id="mq-search-results">
+      <div class="mq-search-empty">Search is ready. Try a page title, a section heading, or a phrase from the content.</div>
+    </div>
+  </section>
+</div>
+
+
+  <!-- Main Content -->
+  <div class="mq-page-shell" id="mq-page-shell" style="--page-margin-left: auto; --page-margin-right: auto;">
+    <main class="mq-main">
+      <!-- dynamic mq content -->
+      <h1>Acquisition ADC + DMA</h1>
+<div class="mq-divider"></div>
+<p>C&#39;est le socle de toute la chaîne d&#39;acquisition du module. Le driver <strong>ADC en mode continu</strong> d&#39;ESP-IDF déporte entièrement l&#39;acquisition vers le matériel.</p>
+
+<div><div class="mq-step"><div class="mq-step-num" data-step="1"></div><div class="mq-step-body"><p>Un <strong>timer</strong> interne déclenche les conversions à la fréquence configurée, avec une régularité que le logiciel ne peut pas atteindre.</p>
+</div></div>
+
+<div class="mq-step"><div class="mq-step-num" data-step="2"></div><div class="mq-step-body"><p>Les résultats sont transférés de l&#39;ADC vers un tampon en SRAM par le contrôleur <strong>DMA</strong>, sans intervention du CPU pour chaque échantillon.</p>
+</div></div>
+
+<div class="mq-step"><div class="mq-step-num" data-step="3"></div><div class="mq-step-body"><p>Le CPU lit les échantillons <strong>par blocs</strong>, quand cela l&#39;arrange, et consacre le reste de son temps au traitement.</p>
+</div></div></div>
+
+<div class="mq-callout info"><p><strong>On ne configure pas la DMA « toute seule » sur ESP32-S3.</strong> Ni Arduino-ESP32 ni ESP-IDF n&#39;exposent d&#39;API générique de configuration DMA : elle est encapsulée par les drivers qui en ont besoin (ADC continu, I2S, SPI). Configurer l&#39;ADC continu, <strong>c&#39;est</strong> configurer la DMA — c&#39;est <code>adc_continuous_new_handle()</code> qui réserve les ressources DMA et alloue les tampons.</p>
+</div>
+<h2>Le matériel ADC</h2>
+<div class="mq-divider"></div>
+<p>Deux ADC à approximations successives, de résolution <strong>12 bits</strong> (4096 niveaux) :</p>
+<div class="mq-table-wrap"><table>
+<thead>
+<tr>
+<th>ADC</th>
+<th>Canaux</th>
+<th>Broches</th>
+<th>Disponibilité</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>ADC1</strong></td>
+<td>10</td>
+<td>GPIO1 à GPIO10</td>
+<td>Toujours utilisable</td>
+</tr>
+<tr>
+<td><strong>ADC2</strong></td>
+<td>10</td>
+<td>GPIO11 à GPIO20</td>
+<td><strong>Inutilisable si le Wi-Fi est actif</strong></td>
+</tr>
+</tbody></table>
+</div>
+<div class="mq-callout danger"><p>Sur la NeuroBoard-S3, la caméra occupe GPIO4 à GPIO10. Des dix broches ADC1, il ne reste donc que <strong>GPIO1 et GPIO2</strong> libres lorsque la caméra est connectée (GPIO3 est une broche de strapping). Prévoyez votre acquisition analogique sur ces deux entrées.</p>
+</div>
+<h3>Atténuation</h3>
+<div class="mq-divider"></div>
+<div class="mq-table-wrap"><table>
+<thead>
+<tr>
+<th>Atténuation</th>
+<th>Plage utile approximative</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ADC_ATTEN_DB_0</code></td>
+<td>0 – 950 mV</td>
+</tr>
+<tr>
+<td><code>ADC_ATTEN_DB_2_5</code></td>
+<td>0 – 1250 mV</td>
+</tr>
+<tr>
+<td><code>ADC_ATTEN_DB_6</code></td>
+<td>0 – 1750 mV</td>
+</tr>
+<tr>
+<td><code>ADC_ATTEN_DB_12</code></td>
+<td>0 – 3100 mV</td>
+</tr>
+</tbody></table>
+</div>
+<div class="mq-callout info"><p>L&#39;ADC de l&#39;ESP32-S3 n&#39;est ni parfaitement linéaire ni identique d&#39;une puce à l&#39;autre. Une conversion brute n&#39;est donc pas directement une tension. Espressif fournit une API de calibration (<code>esp_adc/adc_cali.h</code>) qui exploite les coefficients gravés en eFuse. À utiliser dès qu&#39;une mesure absolue est nécessaire — pour une analyse spectrale, la valeur brute suffit.</p>
+</div>
+<h2>Contraintes numériques</h2>
+<div class="mq-divider"></div>
+
+<div class="mq-callout danger"><p>Deux contraintes à ne pas oublier :</p>
+<ul>
+<li>Sur ESP32-S3, <code>sample_freq_hz</code> doit être compris entre <strong>611 Hz et 83 333 Hz</strong>. Les 44,1 et 48 kHz audio sont donc accessibles, mais on est loin d&#39;une acquisition arbitrairement rapide.</li>
+<li><code>conv_frame_size</code> doit être un multiple de <code>SOC_ADC_DIGI_DATA_BYTES_PER_CONV</code>, et <code>max_store_buf_size</code> un multiple de <code>conv_frame_size</code>. Un handle mal dimensionné échoue à l&#39;initialisation.</li>
+</ul>
+</div>
+<h2>Mise en œuvre</h2>
+<div class="mq-divider"></div>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;esp_adc/adc_continuous.h&quot;</span></span>
+
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> ADC_CANAL        ADC_CHANNEL_0      <span class="hljs-comment">// GPIO1</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> FE_HZ            16000</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> TRAME_OCTETS     1024               <span class="hljs-comment">// conv_frame_size</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> STORE_OCTETS     (TRAME_OCTETS * 4) <span class="hljs-comment">// multiple de conv_frame_size</span></span>
+
+<span class="hljs-type">static</span> <span class="hljs-type">adc_continuous_handle_t</span> adc_handle = <span class="hljs-literal">NULL</span>;
+
+<span class="hljs-type">void</span> <span class="hljs-title function_">adc_init</span><span class="hljs-params">(<span class="hljs-type">void</span>)</span>
+{
+    <span class="hljs-comment">// 1. Allocation des ressources (réserve la DMA)</span>
+    <span class="hljs-type">adc_continuous_handle_cfg_t</span> handle_cfg = {
+        .max_store_buf_size = STORE_OCTETS,
+        .conv_frame_size    = TRAME_OCTETS,
+    };
+    ESP_ERROR_CHECK(adc_continuous_new_handle(&amp;handle_cfg, &amp;adc_handle));
+
+    <span class="hljs-comment">// 2. Configuration des canaux</span>
+    <span class="hljs-type">adc_digi_pattern_config_t</span> motif[<span class="hljs-number">1</span>] = {
+        {
+            .atten      = ADC_ATTEN_DB_12,
+            .channel    = ADC_CANAL,
+            .unit       = ADC_UNIT_1,
+            .bit_width  = ADC_BITWIDTH_12,
+        },
+    };
+
+    <span class="hljs-type">adc_continuous_config_t</span> cfg = {
+        .pattern_num    = <span class="hljs-number">1</span>,
+        .adc_pattern    = motif,
+        .sample_freq_hz = FE_HZ,
+        .conv_mode      = ADC_CONV_SINGLE_UNIT_1,
+        .format         = ADC_DIGI_OUTPUT_FORMAT_TYPE2,
+    };
+    ESP_ERROR_CHECK(adc_continuous_config(adc_handle, &amp;cfg));
+
+    <span class="hljs-comment">// 3. Démarrage — le matériel échantillonne ensuite seul</span>
+    ESP_ERROR_CHECK(adc_continuous_start(adc_handle));
+}</code></pre></div><h2>Lecture et décodage</h2>
+<div class="mq-divider"></div>
+<p><code>adc_continuous_read()</code> remplit un tampon d&#39;<strong>octets bruts</strong>. Ces octets doivent être réinterprétés comme des structures <code>adc_digi_output_data_t</code> : sur ESP32-S3, le format <code>TYPE2</code> encode dans chaque résultat le numéro d&#39;unité, le numéro de canal et la donnée sur 12 bits.</p>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-type">static</span> <span class="hljs-type">uint8_t</span> brut[TRAME_OCTETS];
+
+<span class="hljs-type">void</span> <span class="hljs-title function_">adc_lire</span><span class="hljs-params">(<span class="hljs-type">void</span>)</span>
+{
+    <span class="hljs-type">uint32_t</span> recus = <span class="hljs-number">0</span>;
+
+    <span class="hljs-type">esp_err_t</span> err = adc_continuous_read(adc_handle, brut,
+                                        TRAME_OCTETS, &amp;recus, <span class="hljs-number">0</span>);
+    <span class="hljs-keyword">if</span> (err != ESP_OK) <span class="hljs-keyword">return</span>;      <span class="hljs-comment">// ESP_ERR_TIMEOUT = rien de prêt</span>
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; recus; i += SOC_ADC_DIGI_RESULT_BYTES) {
+        <span class="hljs-type">adc_digi_output_data_t</span> *p = (<span class="hljs-type">adc_digi_output_data_t</span> *)&amp;brut[i];
+
+        <span class="hljs-type">uint32_t</span> canal  = p-&gt;type2.channel;
+        <span class="hljs-type">uint32_t</span> valeur = p-&gt;type2.data;      <span class="hljs-comment">// 0-4095</span>
+
+        <span class="hljs-keyword">if</span> (canal == ADC_CANAL) {
+            <span class="hljs-comment">// traiter l&#x27;échantillon</span>
+        }
+    }
+}</code></pre></div>
+<div class="mq-callout warn"><p>Filtrez toujours sur le numéro de canal, même avec un seul canal configuré. Le flux DMA peut contenir des résultats parasites en début de conversion ; les ignorer évite des valeurs aberrantes en tête de tampon.</p>
+</div>
+
+<div class="mq-callout ok"><p><strong>À retenir.</strong> Pour une acquisition précise et non bloquante, on abandonne <code>analogRead()</code> au profit du driver ADC continu. Le matériel échantillonne à fréquence fixe et transfère les données en mémoire de façon autonome ; le CPU reste disponible pour le traitement.</p>
+</div>
+
+<div class="mq-actions"><p><a href="buffering.html" class="mq-btn primary">Tampons et blocs ➽</a></p>
+</div>
+      <!-- bottom previous/next navigation -->
+      <nav class="mq-page-nav" aria-label="Page navigation"><a class="mq-page-nav-link mq-page-nav-prev" href="../examples.html" aria-label="Previous page: Exemples"><span class="mq-page-nav-kicker">Previous</span><span class="mq-page-nav-title">↩ Exemples</span></a><a class="mq-page-nav-link mq-page-nav-next" href="buffering.html" aria-label="Next page: Tampons et blocs"><span class="mq-page-nav-kicker">Next</span><span class="mq-page-nav-title">Tampons et blocs ↪</span></a></nav>
+    </main>
+    <!-- Sidebar summary (optional) -->
+    <aside class="mq-page-summary-slot" id="mq-page-summary-slot" hidden aria-label="Page summary"></aside>
+
+  </div>
+  
+  <!-- Footer -->
+  <footer class="mq-footer">
+    <!-- Remove if you wish, keeping it brings visibility to Marque :) -->
+    <span class="mq-footer-built">Built with <a href="https://getmarque.pages.dev">Marque</a></span>
+    
+    <!-- Repo button (Optional) -->
+    <span class="mq-footer-repo">  
+      <a class="mq-footer-repo-link" href="https://github.com/Loxed" aria-label="Open repository">
+        <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" stroke-width="1.5"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000"><path d="M16 22.0268V19.1568C16.0375 18.68 15.9731 18.2006 15.811 17.7506C15.6489 17.3006 15.3929 16.8902 15.06 16.5468C18.2 16.1968 21.5 15.0068 21.5 9.54679C21.4997 8.15062 20.9627 6.80799 20 5.79679C20.4558 4.5753 20.4236 3.22514 19.91 2.02679C19.91 2.02679 18.73 1.67679 16 3.50679C13.708 2.88561 11.292 2.88561 8.99999 3.50679C6.26999 1.67679 5.08999 2.02679 5.08999 2.02679C4.57636 3.22514 4.54413 4.5753 4.99999 5.79679C4.03011 6.81549 3.49251 8.17026 3.49999 9.57679C3.49999 14.9968 6.79998 16.1868 9.93998 16.5768C9.61098 16.9168 9.35725 17.3222 9.19529 17.7667C9.03334 18.2112 8.96679 18.6849 8.99999 19.1568V22.0268" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 20.0267C6 20.9999 3.5 20.0267 2 17.0267" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </a>
+    </span>
+</footer>
+
+  <script src="../index.js"></script>
+</body>
+</html>

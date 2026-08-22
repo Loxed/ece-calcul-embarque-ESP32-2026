@@ -1,0 +1,78 @@
++++
+title = Contraintes des broches
+nav = constraints
+summary = true
++++
+
+# Contraintes d'utilisation des broches
+@divider
+
+## Broches de strapping
+@divider
+
+Quatre broches sont échantillonnées au reset et ne doivent pas être maintenues à un niveau arbitraire pendant la mise sous tension.
+
+| GPIO | Rôle au reset |
+| :---: | --- |
+| GPIO0 | Sélection du mode de démarrage (bas = mode download). Reliée au bouton BOOT. |
+| GPIO3 | Sélection de la source du signal JTAG. |
+| GPIO45 | Sélection de la tension VDD_SPI. **Doit être au niveau bas au reset** sur ce module, dont la flash et la PSRAM fonctionnent en 3,3 V. |
+| GPIO46 | Contrôle de l'affichage des messages de la ROM. |
+
+@callout .danger
+Piloter ces broches avec un circuit externe qui impose son niveau au démarrage empêche la carte de démarrer.
+@end callout
+
+## ADC2 et Wi-Fi
+@divider
+
+@callout .warn
+**L'ADC2 ne peut pas être utilisé lorsque le Wi-Fi est actif.** Sur la NeuroBoard-S3, cela concerne les **GPIO11 à GPIO20**.
+@end callout
+
+Pour toute acquisition analogique devant coexister avec le Wi-Fi, utilisez **ADC1** (GPIO1 à GPIO10). Parmi ces broches, seules **GPIO1 et GPIO2** sont libres de tout périphérique embarqué : GPIO3 est une broche de strapping, et GPIO4 à GPIO10 sont prises par la caméra.
+
+## Broches USB
+@divider
+
+GPIO19 et GPIO20 portent **USB D−** et **USB D+**. Les réaffecter en E/S généraliste déconnecte l'interface USB Serial/JTAG, et la carte ne sera plus programmable par USB tant qu'elle n'aura pas été remise en mode download avec **BOOT** et **RST**.
+
+## PSRAM
+@divider
+
+@callout .danger
+GPIO35, GPIO36 et GPIO37 servent à la communication interne entre l'ESP32-S3 et la PSRAM Octal. Elles ne sont pas ramenées sur le connecteur : les positions 11 à 13 de J3 sont marquées **NC**.
+@end callout
+
+## Récapitulatif des broches partagées
+@divider
+
+Si vous utilisez… alors ces broches sont indisponibles :
+
+| Périphérique | Broches occupées |
+| --- | --- |
+| Caméra | GPIO4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18 |
+| microSD | GPIO39, 40, 41 |
+| LED RGB | GPIO38 |
+| USB | GPIO19, 20 |
+
+@card .primary
+## Broches toujours libres de périphérique embarqué
+@divider
+**GPIO1, GPIO2, GPIO14, GPIO21, GPIO42, GPIO47, GPIO48**
+
+Auxquelles s'ajoutent **TX/RX** (GPIO43/GPIO44) si vous n'avez pas besoin d'UART0, et **GPIO3/GPIO46** sous réserve des précautions de strapping.
+@end card
+
+@callout .ok
+Caméra connectée, les broches réellement disponibles pour un montage de TP sont **GPIO1, GPIO2, GPIO14, GPIO21, GPIO42, GPIO47 et GPIO48**.
+
+Prévoyez l'acquisition analogique sur **GPIO1 ou GPIO2** (ADC1_CH0 et ADC1_CH1) : ce sont les seules entrées **ADC1** disponibles. GPIO14 est libre de périphérique mais relève d'**ADC2**, donc inutilisable dès que le Wi-Fi est actif.
+@end callout
+
+## Tension d'entrée
+@divider
+
+@callout .danger
+La tension maximale d'entrée sur une broche est de **3,3 V**. Dépasser cette valeur détruit la puce de manière irréversible. Un capteur alimenté en 5 V exige un pont diviseur ou un adaptateur de niveau.
+@end callout

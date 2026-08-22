@@ -1,0 +1,76 @@
++++
+title = Carte microSD
+nav = microsd
+summary = true
++++
+
+# Carte microSD
+@divider
+
+L'interface SD est câblée en **mode SD 1 bit**.
+
+| Signal SD | GPIO |
+| --- | :---: |
+| CMD | GPIO39 |
+| CLK | GPIO40 |
+| DAT0 | GPIO41 |
+
+@callout .info
+Ces trois broches sont également les broches JTAG (**MTCK**, **MTDO**, **MTDI**). Utiliser la carte SD rend donc le débogage JTAG externe indisponible sur ces broches. Le débogage via USB Serial/JTAG n'est pas affecté.
+@end callout
+
+## Monter la carte
+@divider
+
+```c
+#include "FS.h"
+#include "SD_MMC.h"
+
+#define SD_CMD  39
+#define SD_CLK  40
+#define SD_D0   41
+
+void setup() {
+    Serial.begin(115200);
+
+    SD_MMC.setPins(SD_CLK, SD_CMD, SD_D0);
+
+    // true = mode 1 bit — obligatoire sur cette carte
+    if (!SD_MMC.begin("/sdcard", true)) {
+        Serial.println("Montage échoué");
+        return;
+    }
+
+    Serial.printf("Taille : %llu Mo\n", SD_MMC.cardSize() / (1024 * 1024));
+}
+
+void loop() {}
+```
+
+@callout .danger
+Le second argument de `SD_MMC.begin()` doit être `true` (mode 1 bit). En le laissant à `false`, la pile tente un mode 4 bits sur des broches qui ne sont pas câblées pour, et le montage échoue.
+@end callout
+
+## Écrire un fichier
+@divider
+
+```c
+File f = SD_MMC.open("/mesures.csv", FILE_WRITE);
+if (f) {
+    f.printf("%lu,%u\n", millis(), valeur);
+    f.close();               // sans close(), les données restent en cache
+}
+```
+
+@callout .warn
+Ouvrir et fermer le fichier à chaque échantillon est très lent : une écriture SD coûte plusieurs millisecondes et bloque. Pour enregistrer une acquisition, accumulez en mémoire puis écrivez par blocs — voir [Tampons et blocs](buffering.mq).
+@end callout
+
+## Formatage
+@divider
+
+Utilisez une carte formatée en **FAT32**. Les cartes de grande capacité livrées en exFAT ne sont pas montées par la configuration par défaut.
+
+@callout .info
+La carte SD et la caméra ne partagent aucune broche : elles peuvent fonctionner ensemble. C'est la combinaison utilisée pour enregistrer des images ou des jeux de données d'entraînement directement sur la carte.
+@end callout

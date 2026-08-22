@@ -1,0 +1,252 @@
+/* rubyola - luxe ruby night */
+/* depends on: common.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+:root {
+  --mq-primary: #d63c37;
+  --mq-secondary: #a92622;
+  --mq-tertiary: #ceb372;
+
+  --mq-background: #151210;
+  --mq-surface: #1f1a18;
+  --mq-surface-alt: #29231f;
+  --mq-text: #ece5db;
+  --mq-muted: #9f9283;
+  --mq-border: rgba(255, 255, 255, 0.08);
+
+  --mq-nav-bg: rgba(31, 26, 24, 0.92);
+  --mq-nav-border: rgba(209, 181, 120, 0.14);
+  --mq-nav-link-text: #c9baa7;
+  --mq-nav-active-bg: rgba(214, 60, 55, 0.14);
+  --mq-nav-active-text: #f6b6b3;
+
+  --mq-code-bg: transparent;
+  --mq-code-text: #e7e0d5;
+  --mq-code-border: rgba(209, 181, 120, 0.18);
+  --mq-code-head-bg: #171311;
+  --mq-code-head-text: #d9c18d;
+  --mq-code-copy-bg: rgba(209, 181, 120, 0.08);
+  --mq-code-copy-border: rgba(209, 181, 120, 0.24);
+  --mq-code-copy-bg-hover: rgba(214, 60, 55, 0.18);
+
+  --mq-card-bg: rgba(31, 26, 24, 0.94);
+  --mq-card-border: rgba(209, 181, 120, 0.14);
+  --mq-card-radius: 18px;
+  --mq-card-shadow: 0 26px 60px rgba(0, 0, 0, 0.4);
+
+  --mq-hero-bg: linear-gradient(180deg, rgba(41, 35, 31, 0.94), rgba(31, 26, 24, 0.96));
+  --mq-hero-border: rgba(209, 181, 120, 0.14);
+  --mq-hero-radius: 22px;
+
+  --mq-table-bg: rgba(31, 26, 24, 0.96);
+  --mq-table-border: rgba(209, 181, 120, 0.12);
+  --mq-table-head-bg: rgba(209, 181, 120, 0.08);
+  --mq-table-head-text: #d9c18d;
+  --mq-table-row-alt-bg: rgba(209, 181, 120, 0.03);
+  --mq-table-row-hover-bg: rgba(214, 60, 55, 0.06);
+
+  --mq-summary-bg: rgba(31, 26, 24, 0.92);
+  --mq-summary-border: rgba(209, 181, 120, 0.14);
+  --mq-summary-shadow: 0 22px 50px rgba(0, 0, 0, 0.34);
+
+  --mq-search-surface: #1f1a18;
+  --mq-search-result-bg: rgba(214, 60, 55, 0.08);
+  --mq-search-result-border: rgba(214, 60, 55, 0.2);
+  --mq-search-chip-bg: rgba(209, 181, 120, 0.1);
+  --mq-search-mark-bg: rgba(209, 181, 120, 0.26);
+  --mq-search-mark-text: #f4e8c9;
+  --mq-search-close-bg: rgba(209, 181, 120, 0.08);
+  --mq-search-close-border: rgba(209, 181, 120, 0.18);
+
+  --mq-btn-border: rgba(209, 181, 120, 0.22);
+  --mq-btn-bg-hover: rgba(209, 181, 120, 0.08);
+  --mq-btn-primary-text: #fff8f5;
+  --mq-btn-secondary-text: #1b1714;
+  --mq-btn-tertiary-text: #fff8f5;
+
+  --mq-badge-primary-bg: rgba(214, 60, 55, 0.14);
+  --mq-badge-primary-text: #f08a86;
+  --mq-badge-primary-border: rgba(214, 60, 55, 0.28);
+  --mq-badge-secondary-bg: rgba(209, 181, 120, 0.12);
+  --mq-badge-secondary-text: #d9c18d;
+  --mq-badge-secondary-border: rgba(209, 181, 120, 0.24);
+  --mq-badge-tertiary-bg: rgba(255, 255, 255, 0.05);
+  --mq-badge-tertiary-text: #d8d0c4;
+  --mq-badge-tertiary-border: rgba(255, 255, 255, 0.1);
+
+  --mq-divider-bg: linear-gradient(90deg, var(--mq-tertiary), rgba(209, 181, 120, 0.22));
+  --mq-image-border: rgba(209, 181, 120, 0.14);
+
+  --mq-radius: 14px;
+  --mq-max-width: 860px;
+
+  --mq-font-sans: 'Plus Jakarta Sans', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', system-ui, sans-serif;
+  --mq-font-serif: 'Plus Jakarta Sans', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', system-ui, sans-serif;
+  --mq-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --bg: var(--mq-background);
+  --surface: var(--mq-surface);
+  --surface2: var(--mq-surface-alt);
+  --text: var(--mq-text);
+  --muted: var(--mq-muted);
+  --accent: var(--mq-primary);
+  --accent2: var(--mq-secondary);
+  --border: var(--mq-border);
+  --radius: var(--mq-radius);
+  --max-w: var(--mq-max-width);
+  --font-sans: var(--mq-font-sans);
+  --font-serif: var(--mq-font-serif);
+  --font-mono: var(--mq-font-mono);
+}
+
+
+body {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='42.64' height='42.56' viewBox='0 0 42.64 42.56'><defs><pattern id='gem' width='42.64' height='42.56' patternUnits='userSpaceOnUse'><polygon points='6.33,2.00 14.99,2.00 10.66,9.25' fill='rgba(230,41,35,0.035)'/><polygon points='6.33,2.00 10.66,9.25 2.00,9.25' fill='rgba(230,41,35,0.018)'/><polygon points='14.99,2.00 19.32,9.25 10.66,9.25' fill='rgba(230,41,35,0.010)'/><polygon points='2.00,9.25 10.66,9.25 10.66,19.28' fill='rgba(230,41,35,0.022)'/><polygon points='19.32,9.25 10.66,19.28 10.66,9.25' fill='rgba(230,41,35,0.030)'/><polygon points='6.33,2.00 14.99,2.00 19.32,9.25 10.66,19.28 2.00,9.25' fill='none' stroke='rgba(230,41,35,0.100)' stroke-width='0.7'/><polygon points='27.65,2.00 36.31,2.00 31.98,9.25' fill='rgba(230,41,35,0.035)'/><polygon points='27.65,2.00 31.98,9.25 23.32,9.25' fill='rgba(230,41,35,0.018)'/><polygon points='36.31,2.00 40.64,9.25 31.98,9.25' fill='rgba(230,41,35,0.010)'/><polygon points='23.32,9.25 31.98,9.25 31.98,19.28' fill='rgba(230,41,35,0.022)'/><polygon points='40.64,9.25 31.98,19.28 31.98,9.25' fill='rgba(230,41,35,0.030)'/><polygon points='27.65,2.00 36.31,2.00 40.64,9.25 31.98,19.28 23.32,9.25' fill='none' stroke='rgba(230,41,35,0.100)' stroke-width='0.7'/><polygon points='16.99,23.28 25.65,23.28 21.32,30.53' fill='rgba(230,41,35,0.035)'/><polygon points='16.99,23.28 21.32,30.53 12.66,30.53' fill='rgba(230,41,35,0.018)'/><polygon points='25.65,23.28 29.98,30.53 21.32,30.53' fill='rgba(230,41,35,0.010)'/><polygon points='12.66,30.53 21.32,30.53 21.32,40.56' fill='rgba(230,41,35,0.022)'/><polygon points='29.98,30.53 21.32,40.56 21.32,30.53' fill='rgba(230,41,35,0.030)'/><polygon points='16.99,23.28 25.65,23.28 29.98,30.53 21.32,40.56 12.66,30.53' fill='none' stroke='rgba(230,41,35,0.100)' stroke-width='0.7'/><polygon points='-4.33,23.28 4.33,23.28 0,30.53' fill='rgba(230,41,35,0.035)'/><polygon points='-4.33,23.28 0,30.53 -8.66,30.53' fill='rgba(230,41,35,0.018)'/><polygon points='4.33,23.28 8.66,30.53 0,30.53' fill='rgba(230,41,35,0.010)'/><polygon points='-8.66,30.53 0,30.53 0,40.56' fill='rgba(230,41,35,0.022)'/><polygon points='8.66,30.53 0,40.56 0,30.53' fill='rgba(230,41,35,0.030)'/><polygon points='-4.33,23.28 4.33,23.28 8.66,30.53 0,40.56 -8.66,30.53' fill='none' stroke='rgba(230,41,35,0.100)' stroke-width='0.7'/><polygon points='38.31,23.28 46.97,23.28 42.64,30.53' fill='rgba(230,41,35,0.035)'/><polygon points='38.31,23.28 42.64,30.53 33.98,30.53' fill='rgba(230,41,35,0.018)'/><polygon points='46.97,23.28 51.30,30.53 42.64,30.53' fill='rgba(230,41,35,0.010)'/><polygon points='33.98,30.53 42.64,30.53 42.64,40.56' fill='rgba(230,41,35,0.022)'/><polygon points='51.30,30.53 42.64,40.56 42.64,30.53' fill='rgba(230,41,35,0.030)'/><polygon points='38.31,23.28 46.97,23.28 51.30,30.53 42.64,40.56 33.98,30.53' fill='none' stroke='rgba(230,41,35,0.100)' stroke-width='0.7'/></pattern></defs><rect width='100%' height='100%' fill='url(%23gem)'/></svg>"),
+    radial-gradient(circle at top left, rgba(214, 60, 55, 0.12), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(209, 181, 120, 0.08), transparent 24%),
+    linear-gradient(180deg, #1a1513 0%, var(--mq-background) 30%, var(--mq-background) 100%);
+}
+
+
+.mq-nav {
+  backdrop-filter: blur(18px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3);
+}
+
+.mq-nav-brand {
+  color: #f2eadb;
+  font-weight: 700;
+}
+
+.mq-nav-links a,
+.mq-nav-group > .mq-nav-group-trigger {
+  border-radius: 999px !important;
+}
+
+.mq-main h1 {
+  color: var(--mq-tertiary);
+  font-size: clamp(2rem, 4vw, 2.85rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.mq-main h2 {
+  color: var(--mq-text);
+  font-size: 1.24rem;
+  font-weight: 700;
+  padding-bottom: 0.35rem;
+
+}
+
+.mq-main h3 {
+  color: #d8cab5;
+  font-size: 0.94rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.mq-main a {
+  color: var(--mq-tertiary);
+  text-decoration-color: rgba(209, 181, 120, 0.36);
+  text-underline-offset: 0.18em;
+}
+
+.mq-main a:hover {
+  color: var(--mq-primary);
+}
+
+.mq-card,
+.mq-spotlight,
+.mq-hero,
+.mq-page-nav-link {
+  box-shadow: var(--mq-card-shadow);
+}
+
+.mq-main blockquote {
+  position: relative;
+  margin: 1.6rem 0;
+  padding: 1.45rem 1.5rem 1.35rem 1.9rem;
+  border: 1px solid rgba(209, 181, 120, 0.22);
+  border-left: none;
+  border-radius: var(--mq-radius);
+  background: rgba(209, 181, 120, 0.05);
+  color: #b4a898;
+  font-style: normal;
+}
+
+.mq-main blockquote::before {
+  content: "\201C";
+  position: absolute;
+  left: -0.28rem;
+  top: -0.78rem;
+  color: rgba(209, 181, 120, 0.35);
+  font-size: 4.8rem;
+  line-height: 1;
+}
+
+.mq-main :not(pre) > code {
+  background: rgba(209, 181, 120, 0.12);
+  color: #e2cd9b;
+  border: 1px solid rgba(209, 181, 120, 0.18);
+}
+
+.mq-code-block {
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.42);
+  border-radius: 0 0 var(--mq-radius) var(--mq-radius);
+}
+
+.mq-code-head {
+  border: none;
+}
+
+.mq-main pre,
+.mq-code-block pre,
+.mq-code-head pre {
+  line-height: 1.78;
+  border-radius: 0 0 var(--mq-radius) var(--mq-radius);
+}
+
+
+.mq-summary-link:hover,
+.mq-summary-link:focus-visible,
+.mq-summary-item.active > .mq-summary-link,
+.mq-summary-link[aria-current="location"] {
+  color: var(--mq-primary) !important;
+}
+
+a.mq-btn {
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  font-size: 0.82rem;
+}
+
+
+a.mq-btn.primary:hover,
+a.mq-btn.secondary:hover,
+a.mq-btn.tertiary:hover{
+  color: white;
+}
+
+.mq-page-nav-link:hover {
+  border-color: rgba(214, 60, 55, 0.32);
+  color: var(--mq-primary);
+  background: rgba(214, 60, 55, 0.05);
+}
+
+/* .mq-search-toggle svg, */
+.mq-footer-repo-link svg,
+.mq-nav-toggle {
+  filter: invert(1);
+}
+
+
+.mq-divider {
+  width: clamp(200px, 0%, 500px);
+  height: 20px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 429.27 35'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='429.27' y2='0' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0%25' stop-color='%23D1B578' stop-opacity='1'/%3E%3Cstop offset='100%25' stop-color='%23D1B578' stop-opacity='.22'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M3.54 26.52C143.5 6.61 285.44 3.05 426.54 9.6c.28.01.49.25.48.52s-.25.49-.52.48C285.56 5.48 143.85 10.46 4.33 31.74c-1.44.22-2.79-.76-3.01-2.2-.23-1.45.78-2.81 2.23-3.02Z' fill='url(%23g)'/%3E%3C/svg%3E")
+    no-repeat left center / 100% 100%;
+  border-radius: 0; /* remove old border-radius */
+  margin-top: -18px;
+}

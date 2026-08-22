@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NeuroBoard S3 — ESP-IDF</title>
+
+<meta name="description" content="Carte de développement ESP32-S3 — documentation du module TS, ECE">
+
+<!-- 16x16 and 32x32 PNG favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png">
+
+<!-- Web manifest for PWA support -->
+<link rel="manifest" href="../favicon/site.webmanifest">
+
+<!-- Fallback for .ico (optional) -->
+<link rel="icon" href="../favicon/favicon.ico">
+
+<!-- Stylesheets -->
+<link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="../layout-sidebar.css">
+<link rel="stylesheet" id="mq-theme-stylesheet" href="../theme-rustique.css">
+<script>
+window.__mqThemeConfig = {"canSwitch":true,"defaultTheme":"rustique","pageTheme":"rustique","pageThemeHref":"../theme-rustique.css","storageKey":"mq:theme:neuroboard-s3","themes":{"rustique":{"href":"../theme-rustique.css","label":"Rustique"},"comte":{"href":"../theme-comte.css","label":"Comte"},"elmental":{"href":"../theme-elmental.css","label":"Elmental"},"gouda":{"href":"../theme-gouda.css","label":"Gouda"},"pycorino":{"href":"../theme-pycorino.css","label":"Pycorino"},"rubyola":{"href":"../theme-rubyola.css","label":"Rubyola"},"legacy/mida":{"href":"../theme-legacy-mida.css","label":"Legacy: Mida"}}};
+(function () {
+  var config = window.__mqThemeConfig;
+  if (!config || !config.canSwitch || !config.themes) return;
+
+  var selected = config.pageTheme || config.defaultTheme;
+  try {
+    var stored = window.localStorage && window.localStorage.getItem(config.storageKey);
+    if (stored && config.themes[stored]) selected = stored;
+  } catch (_) {}
+
+  var theme = config.themes[selected];
+  var link = document.getElementById('mq-theme-stylesheet');
+  if (!theme || !theme.href || !link) return;
+
+  link.href = theme.href;
+  link.setAttribute('data-theme-name', selected);
+  document.documentElement.setAttribute('data-mq-theme', selected);
+}());
+</script>
+</head>
+
+<body>
+  <!-- Header -->
+  <nav class="mq-nav">
+  <div class="mq-nav-head">
+    <a class="mq-nav-brand" href="../">NeuroBoard S3</a>
+    <button class="mq-search-toggle" type="button" aria-expanded="false" aria-controls="mq-search" aria-label="Open search" onclick="mqToggleSearch(this)">
+      <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M17 17L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+      <span class="mq-search-toggle-label">Search</span>
+      <span class="mq-search-toggle-shortcut" data-search-shortcut aria-hidden="true" hidden></span>
+    </button>
+    <details class="mq-theme-switcher" data-theme-switcher>
+      <summary class="mq-theme-toggle" aria-label="Change theme">
+        <span class="mq-theme-toggle-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg>
+</span>
+        <span class="mq-theme-toggle-label">Theme</span>
+        <span class="mq-theme-toggle-value" data-theme-current>Rustique</span>
+      </summary>
+      <div class="mq-theme-menu">
+        <label class="mq-theme-field">
+          <span class="mq-theme-field-label">Change Theme</span>
+          <select class="mq-theme-select" data-theme-select aria-label="Choose theme">
+            <option value="rustique" selected>Rustique (Default)</option><option value="comte">Comte</option><option value="elmental">Elmental</option><option value="gouda">Gouda</option><option value="pycorino">Pycorino</option><option value="rubyola">Rubyola</option><option value="legacy/mida">Legacy: Mida</option>
+          </select>
+        </label>
+      </div>
+    </details>
+  </div>
+  <div class="mq-nav-links">
+    <a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../"><span class="mq-nav-num">1.</span>NeuroBoard S3</a><a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../getting-started.html"><span class="mq-nav-num">2.</span>Prise en main</a>
+<div class="mq-nav-heading">Matériel</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../hardware.html"><span class="mq-nav-num">3.</span>Vue d&#39;ensemble</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/pinout.html"><span class="mq-nav-num">3.1</span>Brochage</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/constraints.html"><span class="mq-nav-num">3.2</span>Contraintes des broches</a></div></div>
+<div class="mq-nav-heading">Périphériques</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../peripherals.html"><span class="mq-nav-num">4.</span>Périphériques</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/camera.html"><span class="mq-nav-num">4.1</span>Caméra</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/rgb-led.html"><span class="mq-nav-num">4.2</span>LED RGB</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/microsd.html"><span class="mq-nav-num">4.3</span>Carte microSD</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/boot-button.html"><span class="mq-nav-num">4.4</span>Bouton BOOT</a></div></div>
+<div class="mq-nav-heading">Développement</div>
+<div class="mq-nav-group mq-nav-summary-group active"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../frameworks.html"><span class="mq-nav-num">5.</span>Frameworks</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="arduino.html"><span class="mq-nav-num">5.1</span>Arduino-ESP32</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link active" style="--mq-nav-level:1;" href="esp-idf.html"><span class="mq-nav-num">5.2</span>ESP-IDF</a></div></div>
+<div class="mq-nav-heading">Exemples</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../examples.html"><span class="mq-nav-num">6.</span>Exemples</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/adc-dma.html"><span class="mq-nav-num">6.1</span>Acquisition ADC + DMA</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/buffering.html"><span class="mq-nav-num">6.2</span>Tampons et blocs</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/fir.html"><span class="mq-nav-num">6.3</span>Filtrage FIR</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/mfcc.html"><span class="mq-nav-num">6.4</span>MFCC</a></div></div>
+<div class="mq-nav-heading">Référence</div>
+<a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../resources.html"><span class="mq-nav-num">7.</span>Ressources</a>
+  </div>
+  <div class="mq-nav-actions">
+    <button class="mq-nav-toggle" type="button" aria-expanded="false" aria-label="Toggle navigation" onclick="mqToggleNav(this)">☰</button>
+  </div>
+</nav>
+
+
+  <!-- Search Container -->
+  <div class="mq-search" id="mq-search" hidden aria-hidden="true">
+  <button class="mq-search-backdrop" type="button" aria-label="Close search" onclick="mqCloseSearch()"></button>
+  <section class="mq-search-panel" role="dialog" aria-modal="true" aria-labelledby="mq-search-title">
+    <div class="mq-search-head">
+      <svg class="mq-search-panel-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.5-3.5"></path>
+      </svg>
+      <label class="mq-search-input-wrap" for="mq-search-input">
+        <span class="mq-search-label" id="mq-search-title">Search this site</span>
+        <input id="mq-search-input" class="mq-search-input" type="search" placeholder="Search pages, headings, and content" autocomplete="off" spellcheck="false">
+      </label>
+      <button class="mq-search-close" type="button" aria-label="Close search" onclick="mqCloseSearch()">
+        <svg class="mq-search-close-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+        <span class="mq-search-close-label">Close</span>
+        <span class="mq-search-close-hint" data-search-close-hint aria-hidden="true" hidden></span>
+      </button>
+    </div>
+    <p class="mq-search-meta" id="mq-search-meta">Type to search titles, headings, and page content.</p>
+    <div class="mq-search-results" id="mq-search-results">
+      <div class="mq-search-empty">Search is ready. Try a page title, a section heading, or a phrase from the content.</div>
+    </div>
+  </section>
+</div>
+
+
+  <!-- Main Content -->
+  <div class="mq-page-shell" id="mq-page-shell" data-page-summary="true" style="--page-margin-left: auto; --page-margin-right: auto;">
+    <main class="mq-main">
+      <!-- dynamic mq content -->
+      <h1>ESP-IDF</h1>
+<div class="mq-divider"></div>
+<p>Le SDK natif d&#39;Espressif. On peut l&#39;utiliser seul (<code>framework = espidf</code>) ou appeler ses drivers depuis un croquis Arduino — c&#39;est le mode privilégié dans le module.</p>
+<h2>Projet PlatformIO en ESP-IDF pur</h2>
+<div class="mq-divider"></div>
+<div class="mq-code-block" data-lang="ini"><div class="mq-code-head"><span class="mq-code-lang">ini</span><button class="mq-code-copy" type="button" aria-label="Copy ini code">Copy</button></div><pre><code class="hljs language-ini"><span class="hljs-section">[env:neuroboard-s3-idf]</span>
+<span class="hljs-attr">platform</span> = https://github.com/pioardui<span class="hljs-literal">no</span>/platform-espressif32/releases/download/stable/platform-espressif32.zip
+<span class="hljs-attr">board</span> = esp32-s3-devkitc-<span class="hljs-number">1</span>
+<span class="hljs-attr">framework</span> = espidf
+
+<span class="hljs-attr">board_build.arduino.memory_type</span> = qio_opi
+<span class="hljs-attr">board_upload.flash_size</span> = <span class="hljs-number">16</span>MB
+<span class="hljs-attr">board_build.partitions</span> = default_16MB.csv
+
+<span class="hljs-attr">monitor_speed</span> = <span class="hljs-number">115200</span></code></pre></div><p>La PSRAM doit également être activée dans <code>sdkconfig</code> :</p>
+<div class="mq-code-block" data-lang=""><div class="mq-code-head"><span class="mq-code-lang"></span><button class="mq-code-copy" type="button" aria-label="Copy  code">Copy</button></div><pre><code class="hljs language-">CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y</code></pre></div>
+<div class="mq-callout warn"><p><code>CONFIG_SPIRAM_MODE_OCT</code> est l&#39;équivalent <code>sdkconfig</code> de « PSRAM OPI ». En mode QUAD sur un N16R8, la PSRAM n&#39;est pas détectée et <code>heap_caps_malloc(..., MALLOC_CAP_SPIRAM)</code> renvoie <code>NULL</code>.</p>
+</div>
+<h2>GPIO</h2>
+<div class="mq-divider"></div>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;driver/gpio.h&quot;</span></span>
+
+<span class="hljs-type">gpio_config_t</span> cfg = {
+    .pin_bit_mask = (<span class="hljs-number">1ULL</span> &lt;&lt; <span class="hljs-number">21</span>),
+    .mode         = GPIO_MODE_OUTPUT,
+    .pull_up_en   = GPIO_PULLUP_DISABLE,
+    .pull_down_en = GPIO_PULLDOWN_DISABLE,
+    .intr_type    = GPIO_INTR_DISABLE,
+};
+gpio_config(&amp;cfg);
+gpio_set_level(<span class="hljs-number">21</span>, <span class="hljs-number">1</span>);</code></pre></div><h2>Interruption GPIO</h2>
+<div class="mq-divider"></div>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;driver/gpio.h&quot;</span></span>
+
+<span class="hljs-type">static</span> <span class="hljs-keyword">volatile</span> <span class="hljs-type">uint32_t</span> compteur = <span class="hljs-number">0</span>;
+
+<span class="hljs-type">static</span> <span class="hljs-type">void</span> IRAM_ATTR <span class="hljs-title function_">isr_handler</span><span class="hljs-params">(<span class="hljs-type">void</span> *arg)</span> {
+    compteur++;
+}
+
+<span class="hljs-type">void</span> <span class="hljs-title function_">bouton_init</span><span class="hljs-params">(<span class="hljs-type">void</span>)</span>
+{
+    <span class="hljs-type">gpio_config_t</span> cfg = {
+        .pin_bit_mask = (<span class="hljs-number">1ULL</span> &lt;&lt; <span class="hljs-number">0</span>),
+        .mode         = GPIO_MODE_INPUT,
+        .pull_up_en   = GPIO_PULLUP_ENABLE,
+        .intr_type    = GPIO_INTR_NEGEDGE,
+    };
+    gpio_config(&amp;cfg);
+
+    gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
+    gpio_isr_handler_add(<span class="hljs-number">0</span>, isr_handler, <span class="hljs-literal">NULL</span>);
+}</code></pre></div>
+<div class="mq-callout info"><p><code>gpio_install_isr_service()</code> ne s&#39;appelle <strong>qu&#39;une fois</strong> pour tout le programme. Un second appel renvoie <code>ESP_ERR_INVALID_STATE</code>. Chaque broche supplémentaire s&#39;ajoute ensuite avec <code>gpio_isr_handler_add()</code>.</p>
+</div>
+<h2>Timer — driver GPTimer</h2>
+<div class="mq-divider"></div>
+<p>Le driver <code>GPTimer</code> expose ce que l&#39;API Arduino décide à votre place : source d&#39;horloge, résolution, sens de comptage, valeur d&#39;alarme, auto-rechargement, priorité et placement de l&#39;interruption.</p>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;driver/gptimer.h&quot;</span></span>
+
+<span class="hljs-type">static</span> <span class="hljs-type">bool</span> IRAM_ATTR <span class="hljs-title function_">on_alarm</span><span class="hljs-params">(<span class="hljs-type">gptimer_handle_t</span> t,
+                               <span class="hljs-type">const</span> <span class="hljs-type">gptimer_alarm_event_data_t</span> *e,
+                               <span class="hljs-type">void</span> *arg)</span>
+{
+    <span class="hljs-comment">// traitement très court</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;    <span class="hljs-comment">// true si un changement de contexte est requis</span>
+}
+
+<span class="hljs-type">void</span> <span class="hljs-title function_">timer_init</span><span class="hljs-params">(<span class="hljs-type">uint32_t</span> fe_hz)</span>
+{
+    <span class="hljs-type">gptimer_handle_t</span> timer = <span class="hljs-literal">NULL</span>;
+
+    <span class="hljs-type">gptimer_config_t</span> cfg = {
+        .clk_src       = GPTIMER_CLK_SRC_XTAL,   <span class="hljs-comment">// stable, indépendant du DFS</span>
+        .direction     = GPTIMER_COUNT_UP,
+        .resolution_hz = <span class="hljs-number">1000000</span>,                <span class="hljs-comment">// 1 MHz → 1 tick = 1 µs</span>
+    };
+    ESP_ERROR_CHECK(gptimer_new_timer(&amp;cfg, &amp;timer));
+
+    <span class="hljs-type">gptimer_event_callbacks_t</span> cbs = { .on_alarm = on_alarm };
+    ESP_ERROR_CHECK(gptimer_register_event_callbacks(timer, &amp;cbs, <span class="hljs-literal">NULL</span>));
+
+    <span class="hljs-type">gptimer_alarm_config_t</span> alarme = {
+        .alarm_count                = <span class="hljs-number">1000000</span> / fe_hz,
+        .reload_count               = <span class="hljs-number">0</span>,
+        .flags.auto_reload_on_alarm = <span class="hljs-literal">true</span>,
+    };
+    ESP_ERROR_CHECK(gptimer_set_alarm_action(timer, &amp;alarme));
+
+    ESP_ERROR_CHECK(gptimer_enable(timer));
+    ESP_ERROR_CHECK(gptimer_start(timer));
+}</code></pre></div>
+<div class="mq-callout info"><p>Le choix de <code>clk_src</code> n&#39;est pas anodin. La fréquence <strong>APB</strong> (80 MHz) peut varier si la gestion dynamique de fréquence (DFS) est activée, alors que <strong>XTAL</strong> (40 MHz) reste stable. Dès qu&#39;on vise une $F_e$ précise, préférez XTAL.</p>
+</div>
+<h2>Le matériel timer de l&#39;ESP32-S3</h2>
+<div class="mq-divider"></div>
+<p>Deux groupes de timers, chacun comportant deux timers génériques, soit <strong>quatre timers</strong>. Ce sont des compteurs <strong>54 bits</strong> pilotés par des prescalers <strong>16 bits</strong>, capables de compter vers le haut ou vers le bas, avec rechargement automatique à l&#39;alarme.</p>
+<p>$$f_{\text{comptage}} = \frac{f_{\text{source}}}{\text{prescaler}} \qquad N_{\text{alarme}} = \frac{f_{\text{comptage}}}{F_e}$$</p>
+
+<div class="mq-callout ok"><p>Un compteur 54 bits à 1 MHz déborde au bout d&#39;environ <strong>570 ans</strong>. Contrairement aux timers 16 bits des petits AVR, le débordement n&#39;est pas une contrainte de conception ici.</p>
+</div>
+<h2>Le niveau registre</h2>
+<div class="mq-divider"></div>
+<p>Configurer un timer group à la main demande de manipuler une dizaine de registres (<code>TIMGn_TxCONFIG_REG</code>, <code>TIMGn_TxALARMLO_REG</code>, <code>TIMGn_TxLOADLO_REG</code>…) pour un résultat strictement identique à celui du driver. Le TRM en donne le détail au chapitre <em>Timer Group</em>.</p>
+
+<div class="mq-callout info"><p>Sur ESP32-S3, descendre au niveau registre pour un timer ou une interruption GPIO n&#39;apporte quasiment rien : le driver ESP-IDF expose déjà tout ce que le matériel sait faire. <strong>Savoir qu&#39;un niveau existe, c&#39;est aussi savoir quand il est inutile d&#39;y descendre.</strong></p>
+</div>
+      <!-- bottom previous/next navigation -->
+      <nav class="mq-page-nav" aria-label="Page navigation"><a class="mq-page-nav-link mq-page-nav-prev" href="arduino.html" aria-label="Previous page: Arduino-ESP32"><span class="mq-page-nav-kicker">Previous</span><span class="mq-page-nav-title">↩ Arduino-ESP32</span></a><a class="mq-page-nav-link mq-page-nav-next" href="../examples.html" aria-label="Next page: Exemples"><span class="mq-page-nav-kicker">Next</span><span class="mq-page-nav-title">Exemples ↪</span></a></nav>
+    </main>
+    <!-- Sidebar summary (optional) -->
+    <aside class="mq-page-summary-slot" id="mq-page-summary-slot" hidden aria-label="Page summary"></aside>
+
+  </div>
+  
+  <!-- Footer -->
+  <footer class="mq-footer">
+    <!-- Remove if you wish, keeping it brings visibility to Marque :) -->
+    <span class="mq-footer-built">Built with <a href="https://getmarque.pages.dev">Marque</a></span>
+    
+    <!-- Repo button (Optional) -->
+    <span class="mq-footer-repo">  
+      <a class="mq-footer-repo-link" href="https://github.com/Loxed" aria-label="Open repository">
+        <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" stroke-width="1.5"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000"><path d="M16 22.0268V19.1568C16.0375 18.68 15.9731 18.2006 15.811 17.7506C15.6489 17.3006 15.3929 16.8902 15.06 16.5468C18.2 16.1968 21.5 15.0068 21.5 9.54679C21.4997 8.15062 20.9627 6.80799 20 5.79679C20.4558 4.5753 20.4236 3.22514 19.91 2.02679C19.91 2.02679 18.73 1.67679 16 3.50679C13.708 2.88561 11.292 2.88561 8.99999 3.50679C6.26999 1.67679 5.08999 2.02679 5.08999 2.02679C4.57636 3.22514 4.54413 4.5753 4.99999 5.79679C4.03011 6.81549 3.49251 8.17026 3.49999 9.57679C3.49999 14.9968 6.79998 16.1868 9.93998 16.5768C9.61098 16.9168 9.35725 17.3222 9.19529 17.7667C9.03334 18.2112 8.96679 18.6849 8.99999 19.1568V22.0268" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 20.0267C6 20.9999 3.5 20.0267 2 17.0267" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </a>
+    </span>
+</footer>
+
+  <script src="../index.js"></script>
+</body>
+</html>

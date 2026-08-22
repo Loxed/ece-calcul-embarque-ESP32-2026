@@ -1,0 +1,164 @@
++++
+title = LED RGB
+nav = rgb-led
+summary = true
++++
+
+# LED RGB
+@divider
+
+Une LED RGB **adressable** est reliée à **GPIO38**. Adressable signifie qu'elle ne se pilote pas par trois sorties analogiques, mais par une trame série chronométrée sur une seule ligne de données — protocole de type WS2812/NeoPixel.
+
+@callout .warn
+Sur l'ESP32-S3-DevKitC-1 la LED est sur GPIO48. Sur la NeuroBoard-S3 elle est sur **GPIO38** : tout exemple copié depuis la DevKitC-1 restera éteint sans erreur.
+@end callout
+
+## Niveau Arduino — sans bibliothèque
+@divider
+
+Arduino-ESP32 embarque `neopixelWrite()`. C'est le chemin le plus court, et il ne demande aucune dépendance.
+
+```c
+#define RGB_LED_PIN 38
+
+void setup() {
+    neopixelWrite(RGB_LED_PIN, 16, 0, 0);   // rouge atténué (R, V, B — 0 à 255)
+}
+
+void loop() {}
+```
+
+@callout .info
+Restez sur des valeurs faibles (16 à 32). À 255 la LED est éblouissante et consomme une part non négligeable du budget 3,3 V. En intensité maximale sur les trois canaux, elle tire environ 60 mA.
+@end callout
+
+Un cycle de couleurs :
+
+```c
+#define RGB_LED_PIN 38
+
+void setup() {}
+
+void loop() {
+    neopixelWrite(RGB_LED_PIN, 16,  0,  0);  delay(300);   // rouge
+    neopixelWrite(RGB_LED_PIN,  0, 16,  0);  delay(300);   // vert
+    neopixelWrite(RGB_LED_PIN,  0,  0, 16);  delay(300);   // bleu
+    neopixelWrite(RGB_LED_PIN,  0,  0,  0);  delay(300);   // éteinte
+}
+```
+
+## Niveau Arduino — avec bibliothèque
+@divider
+
+Pour des effets, un dégradé HSV ou un futur bandeau de LED, une bibliothèque évite de réécrire la conversion de couleurs.
+
+@tab Adafruit NeoPixel
+```ini
+lib_deps = adafruit/Adafruit NeoPixel@^1.12.3
+```
+
+```c
+#include <Adafruit_NeoPixel.h>
+
+#define RGB_LED_PIN   38
+#define RGB_LED_COUNT  1
+
+Adafruit_NeoPixel led(RGB_LED_COUNT, RGB_LED_PIN, NEO_GRB + NEO_KHZ800);
+
+void setup() {
+    led.begin();
+    led.setBrightness(32);          // limite globale, 0-255
+    led.setPixelColor(0, led.Color(255, 0, 0));
+    led.show();                     // rien ne s'affiche sans show()
+}
+
+void loop() {}
+```
+@end tab
+
+@tab FastLED
+```ini
+lib_deps = fastled/FastLED@^3.9.0
+```
+
+```c
+#include <FastLED.h>
+
+#define RGB_LED_PIN   38
+#define RGB_LED_COUNT  1
+
+CRGB leds[RGB_LED_COUNT];
+
+void setup() {
+    FastLED.addLeds<WS2812, RGB_LED_PIN, GRB>(leds, RGB_LED_COUNT);
+    FastLED.setBrightness(32);
+}
+
+void loop() {
+    static uint8_t teinte = 0;
+    leds[0] = CHSV(teinte++, 255, 255);   // balayage de teinte
+    FastLED.show();
+    delay(20);
+}
+```
+@end tab
+
+@callout .info
+L'ordre des canaux est **GRB**, pas RGB — c'est l'ordre de transmission du protocole WS2812. `neopixelWrite()` gère la permutation en interne et prend bien ses arguments dans l'ordre R, V, B. Avec une bibliothèque, il faut le déclarer (`NEO_GRB`, `GRB`). Un rouge qui sort vert vient de là.
+@end callout
+
+## Niveau ESP-IDF
+@divider
+
+Sous ESP-IDF, la LED se pilote avec le composant `led_strip` via le périphérique **RMT**, qui génère les impulsions en matériel plutôt qu'en comptant des cycles CPU.
+
+```sh
+idf.py add-dependency "espressif/led_strip"
+```
+
+```c
+#include "led_strip.h"
+
+#define RGB_LED_PIN 38
+
+static led_strip_handle_t strip;
+
+void led_init(void)
+{
+    led_strip_config_t strip_cfg = {
+        .strip_gpio_num = RGB_LED_PIN,
+        .max_leds       = 1,
+    };
+    led_strip_rmt_config_t rmt_cfg = {
+        .resolution_hz = 10 * 1000 * 1000,   // 10 MHz
+    };
+    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_cfg, &rmt_cfg, &strip));
+    led_strip_clear(strip);
+}
+
+void led_set(uint8_t r, uint8_t g, uint8_t b)
+{
+    led_strip_set_pixel(strip, 0, r, g, b);
+    led_strip_refresh(strip);            // valide la trame
+}
+```
+
+@callout .ok
+C'est un bon exemple de ce qu'apporte le niveau driver : le RMT produit un chronogramme exact au nanoseconde près, indépendamment de la charge CPU. Une implémentation « bit-bang » du même protocole en `digitalWrite()` casse dès qu'une interruption survient au mauvais moment.
+@end callout
+
+## Usage pratique en TP
+@divider
+
+La LED est le seul indicateur visuel embarqué. Elle est utile comme témoin d'état sans mobiliser le port série :
+
+```c
+// Codes couleur suggérés
+neopixelWrite(38, 16,  0,  0);   // rouge  : erreur d'initialisation
+neopixelWrite(38, 16, 16,  0);   // orange : acquisition en cours
+neopixelWrite(38,  0, 16,  0);   // vert   : traitement terminé
+```
+
+@callout .danger
+N'appelez **jamais** `neopixelWrite()` ni `led_strip_refresh()` depuis une ISR. La trame dure des dizaines de microsecondes et bloque l'interruption d'autant, ce qui déclenche le watchdog. Levez un drapeau `volatile` dans l'ISR et rafraîchissez la LED dans le `loop()` ou dans une tâche.
+@end callout

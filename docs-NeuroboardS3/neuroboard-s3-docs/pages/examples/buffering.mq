@@ -1,0 +1,95 @@
++++
+title = Tampons et blocs
+nav = buffering
+summary = true
++++
+
+# Tampons et blocs
+@divider
+
+Une fois l'acquisition autonome, la question devient : **où mettre les échantillons, et quand les traiter**.
+
+## SRAM ou PSRAM
+@divider
+
+| | SRAM interne | PSRAM |
+| --- | --- | --- |
+| Taille | 512 Ko | 8 Mo |
+| Accès | Direct | Via cache |
+| Latence | Faible et déterministe | Variable |
+| Usage | Tampons DMA, traitement temps réel | Frame buffers caméra, gros jeux de données |
+
+```c
+// SRAM interne — pour les tampons temps réel
+uint16_t *tampon = heap_caps_malloc(N * sizeof(uint16_t), MALLOC_CAP_INTERNAL);
+
+// PSRAM — pour les gros volumes non critiques
+uint8_t *image = heap_caps_malloc(taille, MALLOC_CAP_SPIRAM);
+```
+
+@callout .danger
+Les tampons DMA doivent être en **SRAM interne**. Le contrôleur DMA de l'ADC ne peut pas écrire directement en PSRAM. C'est le driver qui alloue ces tampons via `adc_continuous_new_handle()` — c'est pourquoi `max_store_buf_size` consomme de la SRAM, pas de la PSRAM.
+@end callout
+
+## Dimensionner
+@divider
+
+Un tampon de $N$ échantillons à $F_e$ couvre une durée :
+
+$$T = \frac{N}{F_e}$$
+
+À 16 kHz, 1024 échantillons représentent 64 ms de signal et occupent 2 Ko en `uint16_t`.
+
+@callout .info
+Choisissez $N$ en fonction du traitement, pas de la mémoire disponible. Une FFT veut une puissance de deux. Un filtre FIR veut un bloc nettement plus long que le noyau, sous peine de passer trop de temps dans la gestion des bords.
+@end callout
+
+## Double tampon
+@divider
+
+Le motif de base : le matériel remplit un tampon pendant que le CPU traite l'autre.
+
+```c
+#define N 1024
+
+static uint16_t tampon[2][N];
+static volatile int  actif = 0;      // rempli par l'acquisition
+static volatile bool pret  = false;
+
+// Côté acquisition : bascule quand le tampon est plein
+void sur_bloc_complet(void) {
+    actif = 1 - actif;
+    pret  = true;
+}
+
+// Côté traitement
+void loop() {
+    if (pret) {
+        pret = false;
+        traiter(tampon[1 - actif], N);   // l'autre tampon
+    }
+}
+```
+
+@callout .warn
+Si `traiter()` dure plus longtemps que le remplissage d'un tampon, vous perdez des échantillons sans aucun message d'erreur. Mesurez le temps de traitement — un `digitalWrite()` en début et fin de `traiter()`, observé à l'oscilloscope, donne immédiatement la marge disponible.
+@end callout
+
+## Le port série comme goulot d'étranglement
+@divider
+
+@callout .danger
+À 115 200 bauds, on transmet environ **11 500 octets par seconde**. Cela ne suffit pas à envoyer en temps réel un signal échantillonné à 20 kHz en 16 bits, qui demanderait **40 000 octets par seconde**.
+
+**Une acquisition qui semble « perdre des échantillons » est très souvent une liaison série saturée, pas un ADC défaillant.**
+@end callout
+
+Trois remèdes, par ordre de préférence :
+
+- **Traiter à bord et ne transmettre que le résultat.** Un spectre de 512 points pèse bien moins que le signal qui l'a produit.
+- **Acquérir par blocs, puis transmettre pendant une pause.** Adapté si l'acquisition n'a pas besoin d'être continue.
+- **Augmenter le débit.** `monitor_speed = 921600` fonctionne sur le port USB natif, qui n'est pas limité par un pont UART.
+
+@callout .info
+Le port USB natif de l'ESP32-S3 n'est pas une vraie liaison série : le débit annoncé est largement nominal. Pour du transfert de masse, l'enregistrement sur [carte microSD](microsd.mq) est plus fiable que le port série.
+@end callout

@@ -1,0 +1,185 @@
++++
+title = Caméra
+nav = camera
+summary = true
++++
+
+# Interface caméra
+@divider
+
+Le connecteur FPC porte une interface **DVP** (parallèle 8 bits) et un bus de contrôle **SCCB**.
+
+@row capteurs
+  @card .primary
+    ## OV3660 @badge .ok "conçue pour"
+    @divider
+    Capteur 3 Mpx, jusqu'à **QXGA** 2048×1536.
+  @end card
+
+  @card
+    ## OV2640 @badge "compatible"
+    @divider
+    Capteur 2 Mpx au brochage identique, jusqu'à **UXGA** 1600×1200. Même pilote.
+  @end card
+@end row capteurs
+
+## Mapping des broches
+@divider
+
+| Signal caméra | GPIO | Remarque |
+| --- | :---: | --- |
+| SIOD (SCCB SDA) | GPIO4 | Tirage monté sur carte |
+| SIOC (SCCB SCL) | GPIO5 | Tirage monté sur carte |
+| VSYNC | GPIO6 | |
+| HREF | GPIO7 | |
+| PCLK | GPIO8 | |
+| XCLK | GPIO16 | Horloge maître générée par l'ESP32-S3 (LEDC) |
+| D0 (Y2) | GPIO10 | |
+| D1 (Y3) | GPIO12 | |
+| D2 (Y4) | GPIO13 | |
+| D3 (Y5) | GPIO11 | |
+| D4 (Y6) | GPIO9 | |
+| D5 (Y7) | GPIO18 | |
+| D6 (Y8) | GPIO17 | |
+| D7 (Y9) | GPIO15 | |
+
+@callout .danger
+Les lignes de données ne sont **pas** dans l'ordre des GPIO. Copier une définition de broches depuis une autre carte caméra ESP32-S3 (ESP32-S3-EYE, Freenove, XIAO Sense…) produit une image brouillée ou noire. Utilisez le mapping ci-dessus.
+@end callout
+
+@callout .info
+`PWDN` et `RESET` ne sont pas ramenés sur le connecteur. Déclarez-les à `-1` dans la configuration du pilote.
+@end callout
+
+## Dépendance
+@divider
+
+Le pilote [esp32-camera](https://github.com/espressif/esp32-camera) est fourni avec Arduino-ESP32 (`#include "esp_camera.h"`). Sous PlatformIO il est déjà présent dans le core ; aucune déclaration `lib_deps` n'est nécessaire.
+
+Sous ESP-IDF, ajoutez-le comme composant managé :
+
+```sh
+idf.py add-dependency "espressif/esp32-camera"
+```
+
+## Configuration du pilote
+@divider
+
+```c
+#include "esp_camera.h"
+
+#define CAM_PIN_PWDN    -1   // non connectée
+#define CAM_PIN_RESET   -1   // non connectée
+#define CAM_PIN_XCLK    16
+#define CAM_PIN_SIOD     4
+#define CAM_PIN_SIOC     5
+#define CAM_PIN_D7      15
+#define CAM_PIN_D6      17
+#define CAM_PIN_D5      18
+#define CAM_PIN_D4       9
+#define CAM_PIN_D3      11
+#define CAM_PIN_D2      13
+#define CAM_PIN_D1      12
+#define CAM_PIN_D0      10
+#define CAM_PIN_VSYNC    6
+#define CAM_PIN_HREF     7
+#define CAM_PIN_PCLK     8
+
+static camera_config_t camera_config = {
+    .pin_pwdn     = CAM_PIN_PWDN,
+    .pin_reset    = CAM_PIN_RESET,
+    .pin_xclk     = CAM_PIN_XCLK,
+    .pin_sccb_sda = CAM_PIN_SIOD,
+    .pin_sccb_scl = CAM_PIN_SIOC,
+    .pin_d7 = CAM_PIN_D7, .pin_d6 = CAM_PIN_D6,
+    .pin_d5 = CAM_PIN_D5, .pin_d4 = CAM_PIN_D4,
+    .pin_d3 = CAM_PIN_D3, .pin_d2 = CAM_PIN_D2,
+    .pin_d1 = CAM_PIN_D1, .pin_d0 = CAM_PIN_D0,
+    .pin_vsync = CAM_PIN_VSYNC,
+    .pin_href  = CAM_PIN_HREF,
+    .pin_pclk  = CAM_PIN_PCLK,
+
+    .xclk_freq_hz = 20000000,        // 20 MHz ; descendre à 10 MHz si instable
+    .ledc_timer   = LEDC_TIMER_0,
+    .ledc_channel = LEDC_CHANNEL_0,
+
+    .pixel_format = PIXFORMAT_JPEG,  // RGB565 / GRAYSCALE pour le traitement
+    .frame_size   = FRAMESIZE_SVGA,
+    .jpeg_quality = 12,              // 0-63, plus bas = meilleure qualité
+    .fb_count     = 2,               // 2 exige la PSRAM
+    .fb_location  = CAMERA_FB_IN_PSRAM,
+    .grab_mode    = CAMERA_GRAB_WHEN_EMPTY,
+};
+
+void app_camera_init(void)
+{
+    esp_err_t err = esp_camera_init(&camera_config);
+    if (err != ESP_OK) {
+        ESP_LOGE("cam", "init échouée : 0x%x", err);
+    }
+}
+```
+
+## Capturer une image
+@divider
+
+```c
+camera_fb_t *fb = esp_camera_fb_get();
+if (!fb) {
+    ESP_LOGE("cam", "capture échouée");
+    return;
+}
+
+// fb->buf   : données brutes
+// fb->len   : taille en octets
+// fb->width / fb->height / fb->format
+
+esp_camera_fb_return(fb);   // OBLIGATOIRE
+```
+
+@callout .danger
+Chaque `esp_camera_fb_get()` doit être suivi d'un `esp_camera_fb_return()`. Oublier la restitution épuise les tampons en `fb_count` captures, après quoi `esp_camera_fb_get()` renvoie `NULL` en permanence — un symptôme qui ressemble à une panne matérielle.
+@end callout
+
+## Choisir le format
+@divider
+
+| Format | Usage | Coût |
+| --- | --- | --- |
+| `PIXFORMAT_JPEG` | Stockage, transmission réseau | Compression matérielle, tampon compact |
+| `PIXFORMAT_RGB565` | Affichage, traitement couleur | 2 octets/pixel, pas de décodage |
+| `PIXFORMAT_GRAYSCALE` | Vision, entrée de modèle | 1 octet/pixel, le plus léger |
+
+@callout .ok
+Pour les charges de travail d'apprentissage automatique, utilisez `PIXFORMAT_GRAYSCALE` ou `PIXFORMAT_RGB565` avec un `frame_size` réduit : les images sont alors directement exploitables par le modèle, sans étape de décodage JPEG.
+@end callout
+
+## Dépannage
+@divider
+
+@dropdown "Image noire ou brouillée"
+Les lignes de données ne suivent pas l'ordre des GPIO sur cette carte. Vérifiez chaque `CAM_PIN_Dx` contre le [mapping](#mapping-des-broches) plutôt que de réutiliser une définition venue d'une autre carte.
+@end dropdown
+
+@dropdown "Allocation du frame buffer échouée au-delà du QVGA"
+La PSRAM n'est pas visible. Vérifiez `board_build.arduino.memory_type = qio_opi` dans `platformio.ini`, et `.fb_location = CAMERA_FB_IN_PSRAM`.
+@end dropdown
+
+@dropdown "Capture instable, images déchirées"
+Descendez `.xclk_freq_hz` de 20 MHz à 10 MHz. Vérifiez aussi que l'alimentation 5 V délivre au moins 500 mA : une capture pleine résolution avec Wi-Fi provoque des chutes de tension.
+@end dropdown
+
+@dropdown "esp_camera_fb_get() renvoie NULL après quelques images"
+Tampons non restitués. Chaque capture doit être suivie d'un `esp_camera_fb_return(fb)`, y compris sur les chemins d'erreur.
+@end dropdown
+
+@dropdown "La nappe est branchée mais l'initialisation échoue (0x105)"
+`ESP_ERR_NOT_FOUND` : le capteur ne répond pas sur le bus SCCB. Contrôlez le sens de la nappe (contacts vers la carte) et que le loquet est bien refermé. Débranchez toujours la caméra carte hors tension.
+@end dropdown
+
+## Broches occupées
+@divider
+
+@callout .warn
+Caméra connectée, ces 14 broches sont indisponibles : **GPIO4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18**. Il ne reste que GPIO1, GPIO2, GPIO14, GPIO21, GPIO42, GPIO47 et GPIO48 pour votre montage. Voir [Contraintes des broches](constraints.mq).
+@end callout

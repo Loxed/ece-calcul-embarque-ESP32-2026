@@ -1,0 +1,63 @@
++++
+title = NeuroBoard-S3
+nav = index
+summary = false
++++
+
+# NeuroBoard-S3 v1.0
+@divider
+
+Cette documentation accompagne la prise en main de la NeuroBoard-S3 et fournit également des informations plus détaillées.
+
+La NeuroBoard-S3 est une carte de développement construite autour du module **ESP32-S3-WROOM-1-N16R8**, qui intègre le Wi-Fi, le Bluetooth Low Energy, 16 Mo de flash Quad SPI et 8 Mo de PSRAM Octal SPI. Développée à l'ECE pour le machine learning et la computer vision, elle ajoute une interface caméra, une LED RGB adressable, un lecteur de carte microSD, ainsi qu'un port USB-C pour l'alimentation et la programmation.
+
+La plupart des GPIO du module sont accessibles sur les pin headers situés de part et d'autre de la carte. Les périphériques s'y raccordent avec des jumper wires ; la NeuroBoard-S3 se monte également sur une breadboard.
+
+![Vue isométrique de la NeuroBoard-S3](static/images/neuroboard-isometric-view.png)
+
+*Vue isométrique de la NeuroBoard-S3 v1.0*
+
+Cette documentation est composée des sections suivantes :
+
+- [Prise en main](getting-started.mq) — installation et configuration de l'environnement de développement.
+- [Périphériques](peripherals.mq) — périphériques embarqués et leur mise en œuvre.
+- [Frameworks](frameworks.mq) — les trois niveaux d'API disponibles pour le développement.
+- [Exemples](examples.mq) — acquisition de données, traitement du signal, machine learning.
+- [Ressources](resources.mq) — références et liens utilisées pour la rédaction de cette documentation.
+
+@actions
+@[Prise en main ➽](getting-started.mq){.primary} @[Exemples ](examples.mq){.secondary}
+@end actions
+
+## Description des composants
+@divider
+
+![NeuroBoard-S3 — face avant](static/images/neuroboard-front-view.png)
+
+*NeuroBoard-S3 — face avant*
+
+Les composants sont décrits dans le sens des aiguilles d'une montre, à partir du module.
+
+| Composant | Description |
+| --- | --- |
+| **ESP32-S3-WROOM-1-N16R8** | Module MCU Wi-Fi + Bluetooth Low Energy doté d'un riche ensemble de périphériques, avec accélération matérielle pour les calculs de réseaux de neurones et le traitement du signal. Cette variante embarque 16 Mo de flash Quad SPI et 8 Mo de PSRAM Octal SPI. |
+| **Wi-Fi / Bluetooth 2.4 GHz Antenna** | Antenne PCB assurant les communications Wi-Fi et Bluetooth Low Energy. |
+| **Camera Interface** | Connecteur FPC pour module OV3660 ou OV2640, relié à l'interface DVP parallèle 8 bits de l'ESP32-S3. |
+| **Pin Headers** | Deux barrettes de 22 broches, au pas de 2,54 mm. Toutes les GPIO disponibles y sont ramenées, à l'exception de celles que le module réserve à la flash et à la PSRAM. |
+| **USB-C Port** | Alimentation de la carte, programmation du microcontrôleur et communication série via l'interface USB Serial/JTAG native de l'ESP32-S3. Utilisé également pour le debug JTAG. |
+| **Boot Button** | Bouton de programmation. Le mode Firmware Download est activé en maintenant **BOOT** puis en appuyant sur **RST**. |
+| **Reset Button** | Réinitialisation du microcontrôleur. |
+| **RGB LED** | LED RGB adressable, reliée à **GPIO38**. |
+| **3.3 V Power LED** | Allumée dès que la carte est alimentée. |
+
+@callout .danger
+Le module N16R8 embarque de la **PSRAM Octal SPI**. Les broches GPIO35, GPIO36 et GPIO37 assurent la communication interne entre l'ESP32-S3 et la PSRAM : elles ne sont pas disponibles et apparaissent en **NC** sur le header J3.
+@end callout
+
+@callout .info
+Les pull-ups SCCB (I²C) sont déjà montées sur les lignes de contrôle de la caméra. Aucune résistance externe n'est nécessaire.
+@end callout
+
+@callout .danger
+La tension maximale d'entrée sur une broche est de **3,3 V**. Dépasser cette valeur détruit la puce de manière irréversible.
+@end callout

@@ -1,0 +1,142 @@
++++
+title = Prise en main
+nav = getting-started
+summary = true
++++
+
+# Prise en main
+@divider
+
+Cette page couvre l'installation de l'environnement, la configuration PlatformIO propre à la NeuroBoard-S3, et le premier flash.
+
+## Matériel requis
+@divider
+
+- NeuroBoard-S3
+- Câble USB de **données** correspondant au connecteur de la carte
+- Ordinateur sous Windows, Linux ou macOS
+- Optionnel : module caméra OV3660 ou OV2640 avec nappe FPC
+
+@callout .warn
+Certains câbles USB sont conçus uniquement pour la charge : dépourvus des lignes de données, ils ne peuvent pas programmer la carte. C'est la première cause de « carte non détectée ».
+@end callout
+
+## Installer pioarduino
+@divider
+
+PlatformIO officiel ne suit plus le core Arduino-ESP32 3.x. Le `platform = espressif32` standard reste bloqué sur le core 2.x, ce qui pose problème dès qu'il s'agit de la caméra ou des API ADC récentes.
+
+Le choix retenu est donc **pioarduino**, le fork communautaire qui maintient le support à jour.
+
+@container
+  @step
+  Installer **Visual Studio Code**, puis l'extension **pioarduino IDE** depuis le gestionnaire d'extensions. `git` doit être présent sur le système.
+  @end step
+
+  @step
+  Créer un projet : `pio project init --board esp32-s3-devkitc-1`
+  @end step
+
+  @step
+  Remplacer le contenu de `platformio.ini` par la configuration ci-dessous.
+  @end step
+@end container
+
+@callout .info
+Si PlatformIO classique est déjà présent, l'extension pioarduino s'installe à côté. Une seule des deux extensions doit rester active par fenêtre VS Code, sous peine de conflit de toolchain.
+@end callout
+
+## platformio.ini
+@divider
+
+La carte n'a pas de définition dédiée dans PlatformIO. La configuration part de `esp32-s3-devkitc-1` et corrige ce qui diffère : la taille de flash et le type de PSRAM.
+
+```ini
+[env:neuroboard-s3]
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+board = esp32-s3-devkitc-1
+framework = arduino
+
+; --- Spécifique N16R8 : 16 Mo flash Quad + 8 Mo PSRAM Octal ---
+board_build.arduino.memory_type = qio_opi
+board_upload.flash_size = 16MB
+board_upload.maximum_size = 16777216
+board_build.partitions = default_16MB.csv
+
+build_flags =
+    -DBOARD_HAS_PSRAM
+    -DARDUINO_USB_MODE=1
+    -DARDUINO_USB_CDC_ON_BOOT=1
+
+monitor_speed = 115200
+```
+
+@callout .danger
+`board_build.arduino.memory_type = qio_opi` est la ligne critique. Elle traduit « Flash Mode QIO + PSRAM OPI ». Sans elle, la PSRAM est invisible à l'application et les tampons d'image de la caméra échouent à s'allouer au-delà du QVGA — sans message d'erreur explicite.
+@end callout
+
+@callout .info
+`ARDUINO_USB_CDC_ON_BOOT=1` fait apparaître `Serial` sur le port USB natif. Sans ce flag, `Serial.print()` part sur UART0 (GPIO43/44) et rien n'apparaît dans le moniteur.
+@end callout
+
+## Vérifier la configuration
+@divider
+
+Ce croquis minimal confirme que flash et PSRAM sont correctement vues :
+
+```c
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+
+    Serial.printf("Flash  : %u Mo\n", ESP.getFlashChipSize() / (1024 * 1024));
+    Serial.printf("PSRAM  : %u Mo\n", ESP.getPsramSize() / (1024 * 1024));
+    Serial.printf("SRAM libre : %u o\n", ESP.getFreeHeap());
+}
+
+void loop() {}
+```
+
+Sortie attendue : **16 Mo** de flash et **8 Mo** de PSRAM. Une PSRAM à 0 signale un `board_build.arduino.memory_type` incorrect.
+
+## Flasher
+@divider
+
+```sh
+pio run -t upload
+pio device monitor
+```
+
+Si la carte n'est pas détectée : maintenir **BOOT**, appuyer puis relâcher **RST**, enfin relâcher **BOOT** pour forcer le mode Firmware Download.
+
+@callout .ok
+L'énumération USB passe par le périphérique natif **USB Serial/JTAG** de l'ESP32-S3 (GPIO19/GPIO20). Il n'y a pas de pont USB-UART externe sur cette carte. UART0 (`TX`/`RX`, GPIO43/GPIO44) reste donc entièrement libre pour des liaisons série applicatives.
+@end callout
+
+## Raccorder la caméra
+@divider
+
+**Carte hors tension** : soulever le loquet du connecteur FPC, insérer la nappe contacts vers la carte, puis refermer le loquet.
+
+@actions
+@[Configuration du pilote caméra ➽](camera.mq){.primary}
+@end actions
+
+## Dépannage
+@divider
+
+@dropdown "La carte n'apparaît pas comme port série"
+Câble de charge sans lignes de données, ou firmware planté qui empêche l'énumération USB. Forcer le mode download : **BOOT** maintenu, **RST** pressé puis relâché, **BOOT** relâché.
+@end dropdown
+
+@dropdown "PSRAM à 0 Mo"
+`board_build.arduino.memory_type` absent ou réglé sur `qio_qspi`. Sur N16R8 la valeur correcte est `qio_opi`. Effacer `.pio/` et recompiler après modification.
+@end dropdown
+
+@dropdown "Rien dans le moniteur série"
+`-DARDUINO_USB_CDC_ON_BOOT=1` manquant : `Serial` est routé sur UART0 au lieu de l'USB. Vérifier également la correspondance entre `monitor_speed` et `Serial.begin()`.
+@end dropdown
+
+@dropdown "Erreur de partition / sketch too big"
+`board_build.partitions` non défini : le schéma par défaut suppose 4 Mo. Utiliser `default_16MB.csv`, ou un schéma personnalisé si un modèle doit être embarqué.
+@end dropdown

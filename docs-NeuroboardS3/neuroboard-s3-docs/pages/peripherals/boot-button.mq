@@ -1,0 +1,86 @@
++++
+title = Bouton BOOT
+nav = boot-button
+summary = true
++++
+
+# Bouton BOOT
+@divider
+
+Le bouton **BOOT** est relié à **GPIO0**. Sa fonction première est d'entrer en mode Firmware Download : maintenir **BOOT**, appuyer puis relâcher **RST**, relâcher **BOOT**.
+
+Une fois la carte démarrée, GPIO0 redevient une entrée ordinaire. C'est le seul bouton utilisateur disponible sans câblage externe — utile en TP quand les broches libres se font rares.
+
+## Lecture
+@divider
+
+Le bouton relie GPIO0 à la masse ; un tirage interne maintient le niveau haut au repos.
+
+```c
+#define BOUTON_BOOT 0
+
+void setup() {
+    Serial.begin(115200);
+    pinMode(BOUTON_BOOT, INPUT_PULLUP);
+}
+
+void loop() {
+    if (digitalRead(BOUTON_BOOT) == LOW) {   // LOW = appuyé
+        Serial.println("Appui");
+        delay(200);
+    }
+}
+```
+
+## Par interruption
+@divider
+
+```c
+#define BOUTON_BOOT 0
+
+volatile uint32_t compteur = 0;
+volatile uint32_t dernier_ms = 0;
+
+void IRAM_ATTR isr_bouton() {
+    uint32_t maintenant = millis();
+    if (maintenant - dernier_ms > 50) {   // anti-rebond 50 ms
+        compteur++;
+        dernier_ms = maintenant;
+    }
+}
+
+void setup() {
+    Serial.begin(115200);
+    pinMode(BOUTON_BOOT, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(BOUTON_BOOT), isr_bouton, FALLING);
+}
+
+void loop() {
+    static uint32_t vu = 0;
+    if (compteur != vu) {
+        vu = compteur;
+        Serial.printf("Appuis : %lu\n", vu);
+    }
+}
+```
+
+@callout .warn
+Un bouton mécanique **rebondit** : un appui unique produit plusieurs dizaines de transitions en quelques millisecondes, donc plusieurs dizaines d'interruptions. L'anti-rebond n'est pas optionnel. C'est un défaut que le *polling* masque naturellement et que l'interruption révèle brutalement.
+@end callout
+
+@callout .danger
+GPIO0 est une **broche de strapping**. Elle est échantillonnée au reset : si votre montage la maintient au niveau bas au moment de la mise sous tension, la carte démarre en mode download au lieu d'exécuter votre programme. N'y raccordez rien qui impose un niveau bas permanent.
+@end callout
+
+## Rappels ISR
+@divider
+
+@callout .danger
+Règles à respecter dans une ISR sur ESP32-S3 — leur violation provoque un plantage ou un redémarrage par le watchdog :
+@end callout
+
+- Une ISR doit être **courte** : lever un drapeau, incrémenter un compteur, sortir. Le traitement se fait dans le `loop()` ou dans une tâche.
+- Marquer l'ISR `IRAM_ATTR`, car la flash peut être temporairement inaccessible au moment où l'interruption survient.
+- **Pas de `Serial.print()`, pas de `delay()`, pas de `malloc()`** dans une ISR.
+- Toute variable partagée avec le programme principal doit être `volatile`.
+- L'ESP32-S3 étant double cœur, `volatile` ne suffit pas toujours : pour une section critique, utiliser un `portMUX_TYPE` avec `portENTER_CRITICAL_ISR()` / `portEXIT_CRITICAL_ISR()`.

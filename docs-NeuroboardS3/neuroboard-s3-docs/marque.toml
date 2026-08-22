@@ -1,0 +1,8 @@
+title = NeuroBoard S3
+description = Carte de développement ESP32-S3 — documentation du module TS, ECE
+repo = https://github.com/Loxed
+layout = sidebar
+theme = rustique
+width = default
+align = center
+summary = true

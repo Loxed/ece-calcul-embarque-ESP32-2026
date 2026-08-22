@@ -1,0 +1,153 @@
++++
+title = Acquisition ADC + DMA
+nav = adc-dma
+summary = false
++++
+
+# Acquisition ADC + DMA
+@divider
+
+C'est le socle de toute la chaîne d'acquisition du module. Le driver **ADC en mode continu** d'ESP-IDF déporte entièrement l'acquisition vers le matériel.
+
+@container
+  @step
+  Un **timer** interne déclenche les conversions à la fréquence configurée, avec une régularité que le logiciel ne peut pas atteindre.
+  @end step
+
+  @step
+  Les résultats sont transférés de l'ADC vers un tampon en SRAM par le contrôleur **DMA**, sans intervention du CPU pour chaque échantillon.
+  @end step
+
+  @step
+  Le CPU lit les échantillons **par blocs**, quand cela l'arrange, et consacre le reste de son temps au traitement.
+  @end step
+@end container
+
+@callout .info
+**On ne configure pas la DMA « toute seule » sur ESP32-S3.** Ni Arduino-ESP32 ni ESP-IDF n'exposent d'API générique de configuration DMA : elle est encapsulée par les drivers qui en ont besoin (ADC continu, I2S, SPI). Configurer l'ADC continu, **c'est** configurer la DMA — c'est `adc_continuous_new_handle()` qui réserve les ressources DMA et alloue les tampons.
+@end callout
+
+## Le matériel ADC
+@divider
+
+Deux ADC à approximations successives, de résolution **12 bits** (4096 niveaux) :
+
+| ADC | Canaux | Broches | Disponibilité |
+| --- | --- | --- | --- |
+| **ADC1** | 10 | GPIO1 à GPIO10 | Toujours utilisable |
+| **ADC2** | 10 | GPIO11 à GPIO20 | **Inutilisable si le Wi-Fi est actif** |
+
+@callout .danger
+Sur la NeuroBoard-S3, la caméra occupe GPIO4 à GPIO10. Des dix broches ADC1, il ne reste donc que **GPIO1 et GPIO2** libres lorsque la caméra est connectée (GPIO3 est une broche de strapping). Prévoyez votre acquisition analogique sur ces deux entrées.
+@end callout
+
+### Atténuation
+@divider
+
+| Atténuation | Plage utile approximative |
+| --- | --- |
+| `ADC_ATTEN_DB_0` | 0 – 950 mV |
+| `ADC_ATTEN_DB_2_5` | 0 – 1250 mV |
+| `ADC_ATTEN_DB_6` | 0 – 1750 mV |
+| `ADC_ATTEN_DB_12` | 0 – 3100 mV |
+
+@callout .info
+L'ADC de l'ESP32-S3 n'est ni parfaitement linéaire ni identique d'une puce à l'autre. Une conversion brute n'est donc pas directement une tension. Espressif fournit une API de calibration (`esp_adc/adc_cali.h`) qui exploite les coefficients gravés en eFuse. À utiliser dès qu'une mesure absolue est nécessaire — pour une analyse spectrale, la valeur brute suffit.
+@end callout
+
+## Contraintes numériques
+@divider
+
+@callout .danger
+Deux contraintes à ne pas oublier :
+
+- Sur ESP32-S3, `sample_freq_hz` doit être compris entre **611 Hz et 83 333 Hz**. Les 44,1 et 48 kHz audio sont donc accessibles, mais on est loin d'une acquisition arbitrairement rapide.
+- `conv_frame_size` doit être un multiple de `SOC_ADC_DIGI_DATA_BYTES_PER_CONV`, et `max_store_buf_size` un multiple de `conv_frame_size`. Un handle mal dimensionné échoue à l'initialisation.
+@end callout
+
+## Mise en œuvre
+@divider
+
+```c
+#include "esp_adc/adc_continuous.h"
+
+#define ADC_CANAL        ADC_CHANNEL_0      // GPIO1
+#define FE_HZ            16000
+#define TRAME_OCTETS     1024               // conv_frame_size
+#define STORE_OCTETS     (TRAME_OCTETS * 4) // multiple de conv_frame_size
+
+static adc_continuous_handle_t adc_handle = NULL;
+
+void adc_init(void)
+{
+    // 1. Allocation des ressources (réserve la DMA)
+    adc_continuous_handle_cfg_t handle_cfg = {
+        .max_store_buf_size = STORE_OCTETS,
+        .conv_frame_size    = TRAME_OCTETS,
+    };
+    ESP_ERROR_CHECK(adc_continuous_new_handle(&handle_cfg, &adc_handle));
+
+    // 2. Configuration des canaux
+    adc_digi_pattern_config_t motif[1] = {
+        {
+            .atten      = ADC_ATTEN_DB_12,
+            .channel    = ADC_CANAL,
+            .unit       = ADC_UNIT_1,
+            .bit_width  = ADC_BITWIDTH_12,
+        },
+    };
+
+    adc_continuous_config_t cfg = {
+        .pattern_num    = 1,
+        .adc_pattern    = motif,
+        .sample_freq_hz = FE_HZ,
+        .conv_mode      = ADC_CONV_SINGLE_UNIT_1,
+        .format         = ADC_DIGI_OUTPUT_FORMAT_TYPE2,
+    };
+    ESP_ERROR_CHECK(adc_continuous_config(adc_handle, &cfg));
+
+    // 3. Démarrage — le matériel échantillonne ensuite seul
+    ESP_ERROR_CHECK(adc_continuous_start(adc_handle));
+}
+```
+
+## Lecture et décodage
+@divider
+
+`adc_continuous_read()` remplit un tampon d'**octets bruts**. Ces octets doivent être réinterprétés comme des structures `adc_digi_output_data_t` : sur ESP32-S3, le format `TYPE2` encode dans chaque résultat le numéro d'unité, le numéro de canal et la donnée sur 12 bits.
+
+```c
+static uint8_t brut[TRAME_OCTETS];
+
+void adc_lire(void)
+{
+    uint32_t recus = 0;
+
+    esp_err_t err = adc_continuous_read(adc_handle, brut,
+                                        TRAME_OCTETS, &recus, 0);
+    if (err != ESP_OK) return;      // ESP_ERR_TIMEOUT = rien de prêt
+
+    for (int i = 0; i < recus; i += SOC_ADC_DIGI_RESULT_BYTES) {
+        adc_digi_output_data_t *p = (adc_digi_output_data_t *)&brut[i];
+
+        uint32_t canal  = p->type2.channel;
+        uint32_t valeur = p->type2.data;      // 0-4095
+
+        if (canal == ADC_CANAL) {
+            // traiter l'échantillon
+        }
+    }
+}
+```
+
+@callout .warn
+Filtrez toujours sur le numéro de canal, même avec un seul canal configuré. Le flux DMA peut contenir des résultats parasites en début de conversion ; les ignorer évite des valeurs aberrantes en tête de tampon.
+@end callout
+
+@callout .ok
+**À retenir.** Pour une acquisition précise et non bloquante, on abandonne `analogRead()` au profit du driver ADC continu. Le matériel échantillonne à fréquence fixe et transfère les données en mémoire de façon autonome ; le CPU reste disponible pour le traitement.
+@end callout
+
+@actions
+@[Tampons et blocs ➽](buffering.mq){.primary}
+@end actions

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NeuroBoard S3 — Filtrage FIR</title>
+
+<meta name="description" content="Carte de développement ESP32-S3 — documentation du module TS, ECE">
+
+<!-- 16x16 and 32x32 PNG favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png">
+
+<!-- Web manifest for PWA support -->
+<link rel="manifest" href="../favicon/site.webmanifest">
+
+<!-- Fallback for .ico (optional) -->
+<link rel="icon" href="../favicon/favicon.ico">
+
+<!-- Stylesheets -->
+<link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="../layout-sidebar.css">
+<link rel="stylesheet" id="mq-theme-stylesheet" href="../theme-rustique.css">
+<script>
+window.__mqThemeConfig = {"canSwitch":true,"defaultTheme":"rustique","pageTheme":"rustique","pageThemeHref":"../theme-rustique.css","storageKey":"mq:theme:neuroboard-s3","themes":{"rustique":{"href":"../theme-rustique.css","label":"Rustique"},"comte":{"href":"../theme-comte.css","label":"Comte"},"elmental":{"href":"../theme-elmental.css","label":"Elmental"},"gouda":{"href":"../theme-gouda.css","label":"Gouda"},"pycorino":{"href":"../theme-pycorino.css","label":"Pycorino"},"rubyola":{"href":"../theme-rubyola.css","label":"Rubyola"},"legacy/mida":{"href":"../theme-legacy-mida.css","label":"Legacy: Mida"}}};
+(function () {
+  var config = window.__mqThemeConfig;
+  if (!config || !config.canSwitch || !config.themes) return;
+
+  var selected = config.pageTheme || config.defaultTheme;
+  try {
+    var stored = window.localStorage && window.localStorage.getItem(config.storageKey);
+    if (stored && config.themes[stored]) selected = stored;
+  } catch (_) {}
+
+  var theme = config.themes[selected];
+  var link = document.getElementById('mq-theme-stylesheet');
+  if (!theme || !theme.href || !link) return;
+
+  link.href = theme.href;
+  link.setAttribute('data-theme-name', selected);
+  document.documentElement.setAttribute('data-mq-theme', selected);
+}());
+</script>
+</head>
+
+<body>
+  <!-- Header -->
+  <nav class="mq-nav">
+  <div class="mq-nav-head">
+    <a class="mq-nav-brand" href="../">NeuroBoard S3</a>
+    <button class="mq-search-toggle" type="button" aria-expanded="false" aria-controls="mq-search" aria-label="Open search" onclick="mqToggleSearch(this)">
+      <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M17 17L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+      <span class="mq-search-toggle-label">Search</span>
+      <span class="mq-search-toggle-shortcut" data-search-shortcut aria-hidden="true" hidden></span>
+    </button>
+    <details class="mq-theme-switcher" data-theme-switcher>
+      <summary class="mq-theme-toggle" aria-label="Change theme">
+        <span class="mq-theme-toggle-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg>
+</span>
+        <span class="mq-theme-toggle-label">Theme</span>
+        <span class="mq-theme-toggle-value" data-theme-current>Rustique</span>
+      </summary>
+      <div class="mq-theme-menu">
+        <label class="mq-theme-field">
+          <span class="mq-theme-field-label">Change Theme</span>
+          <select class="mq-theme-select" data-theme-select aria-label="Choose theme">
+            <option value="rustique" selected>Rustique (Default)</option><option value="comte">Comte</option><option value="elmental">Elmental</option><option value="gouda">Gouda</option><option value="pycorino">Pycorino</option><option value="rubyola">Rubyola</option><option value="legacy/mida">Legacy: Mida</option>
+          </select>
+        </label>
+      </div>
+    </details>
+  </div>
+  <div class="mq-nav-links">
+    <a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../"><span class="mq-nav-num">1.</span>NeuroBoard S3</a><a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../getting-started.html"><span class="mq-nav-num">2.</span>Prise en main</a>
+<div class="mq-nav-heading">Matériel</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../hardware.html"><span class="mq-nav-num">3.</span>Vue d&#39;ensemble</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/pinout.html"><span class="mq-nav-num">3.1</span>Brochage</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/constraints.html"><span class="mq-nav-num">3.2</span>Contraintes des broches</a></div></div>
+<div class="mq-nav-heading">Périphériques</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../peripherals.html"><span class="mq-nav-num">4.</span>Périphériques</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/camera.html"><span class="mq-nav-num">4.1</span>Caméra</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/rgb-led.html"><span class="mq-nav-num">4.2</span>LED RGB</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/microsd.html"><span class="mq-nav-num">4.3</span>Carte microSD</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/boot-button.html"><span class="mq-nav-num">4.4</span>Bouton BOOT</a></div></div>
+<div class="mq-nav-heading">Développement</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../frameworks.html"><span class="mq-nav-num">5.</span>Frameworks</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../frameworks/arduino.html"><span class="mq-nav-num">5.1</span>Arduino-ESP32</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../frameworks/esp-idf.html"><span class="mq-nav-num">5.2</span>ESP-IDF</a></div></div>
+<div class="mq-nav-heading">Exemples</div>
+<div class="mq-nav-group mq-nav-summary-group active"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../examples.html"><span class="mq-nav-num">6.</span>Exemples</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="adc-dma.html"><span class="mq-nav-num">6.1</span>Acquisition ADC + DMA</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="buffering.html"><span class="mq-nav-num">6.2</span>Tampons et blocs</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link active" style="--mq-nav-level:1;" href="fir.html"><span class="mq-nav-num">6.3</span>Filtrage FIR</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="mfcc.html"><span class="mq-nav-num">6.4</span>MFCC</a></div></div>
+<div class="mq-nav-heading">Référence</div>
+<a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../resources.html"><span class="mq-nav-num">7.</span>Ressources</a>
+  </div>
+  <div class="mq-nav-actions">
+    <button class="mq-nav-toggle" type="button" aria-expanded="false" aria-label="Toggle navigation" onclick="mqToggleNav(this)">☰</button>
+  </div>
+</nav>
+
+
+  <!-- Search Container -->
+  <div class="mq-search" id="mq-search" hidden aria-hidden="true">
+  <button class="mq-search-backdrop" type="button" aria-label="Close search" onclick="mqCloseSearch()"></button>
+  <section class="mq-search-panel" role="dialog" aria-modal="true" aria-labelledby="mq-search-title">
+    <div class="mq-search-head">
+      <svg class="mq-search-panel-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.5-3.5"></path>
+      </svg>
+      <label class="mq-search-input-wrap" for="mq-search-input">
+        <span class="mq-search-label" id="mq-search-title">Search this site</span>
+        <input id="mq-search-input" class="mq-search-input" type="search" placeholder="Search pages, headings, and content" autocomplete="off" spellcheck="false">
+      </label>
+      <button class="mq-search-close" type="button" aria-label="Close search" onclick="mqCloseSearch()">
+        <svg class="mq-search-close-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+        <span class="mq-search-close-label">Close</span>
+        <span class="mq-search-close-hint" data-search-close-hint aria-hidden="true" hidden></span>
+      </button>
+    </div>
+    <p class="mq-search-meta" id="mq-search-meta">Type to search titles, headings, and page content.</p>
+    <div class="mq-search-results" id="mq-search-results">
+      <div class="mq-search-empty">Search is ready. Try a page title, a section heading, or a phrase from the content.</div>
+    </div>
+  </section>
+</div>
+
+
+  <!-- Main Content -->
+  <div class="mq-page-shell" id="mq-page-shell" data-page-summary="true" style="--page-margin-left: auto; --page-margin-right: auto;">
+    <main class="mq-main">
+      <!-- dynamic mq content -->
+      <h1>Filtrage FIR</h1>
+<div class="mq-divider"></div>
+
+<div class="mq-callout warn"><p><strong>Page volontairement incomplète.</strong> Le filtrage FIR fait l&#39;objet du <strong>TP 8</strong>. Cette page rassemble les contraintes propres à la carte et les outils disponibles ; elle ne contient pas d&#39;implémentation complète, pour ne pas court-circuiter l&#39;exercice. À compléter selon ce que vous souhaitez rendre public.</p>
+</div>
+<h2>Le piège arithmétique</h2>
+<div class="mq-divider"></div>
+
+<div class="mq-callout danger"><p>Le produit de deux <code>uint16_t</code> ne tient pas dans un <code>uint16_t</code>. Un échantillon 12 bits multiplié par un coefficient peut dépasser 16 bits dès le premier terme, et l&#39;accumulation sur $M$ coefficients ajoute $\log_2 M$ bits supplémentaires.</p>
+<p>Accumulez la convolution dans un <strong><code>int32_t</code></strong>, puis reconvertissez en 16 bits par décalage une fois la somme terminée.</p>
+</div>
+<h2>Coefficients en virgule fixe</h2>
+<div class="mq-divider"></div>
+<p>Sur une cible sans FPU rapide, les coefficients se codent en entiers avec un facteur d&#39;échelle en puissance de deux :</p>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-comment">// Coefficient réel h, échelle Q15 (facteur 2^15)</span>
+<span class="hljs-type">int16_t</span> h_q15 = (<span class="hljs-type">int16_t</span>)(h * <span class="hljs-number">32768.0f</span>);
+
+<span class="hljs-comment">// Après accumulation, ramener à l&#x27;échelle d&#x27;origine</span>
+<span class="hljs-type">int16_t</span> sortie = (<span class="hljs-type">int16_t</span>)(accumulateur &gt;&gt; <span class="hljs-number">15</span>);</code></pre></div>
+<div class="mq-callout info"><p>L&#39;ESP32-S3 <strong>dispose</strong> d&#39;une FPU simple précision : le calcul en <code>float</code> n&#39;est pas disqualifiant, contrairement à un AVR. Le choix virgule fixe / virgule flottante devient une question de mesure, pas de dogme. Mesurez les deux avant de trancher.</p>
+</div>
+<h2>esp-dsp</h2>
+<div class="mq-divider"></div>
+<p>Espressif fournit la bibliothèque <strong>esp-dsp</strong>, optimisée pour l&#39;ESP32-S3 (instructions SIMD du LX7).</p>
+<div class="mq-code-block" data-lang="ini"><div class="mq-code-head"><span class="mq-code-lang">ini</span><button class="mq-code-copy" type="button" aria-label="Copy ini code">Copy</button></div><pre><code class="hljs language-ini"><span class="hljs-attr">lib_deps</span> = espressif/esp-dsp@^<span class="hljs-number">1.6</span>.<span class="hljs-number">0</span></code></pre></div><div class="mq-code-block" data-lang="sh"><div class="mq-code-head"><span class="mq-code-lang">sh</span><button class="mq-code-copy" type="button" aria-label="Copy sh code">Copy</button></div><pre><code class="hljs language-sh">idf.py add-dependency <span class="hljs-string">&quot;espressif/esp-dsp&quot;</span></code></pre></div><p>Fonctions pertinentes : convolution et FIR (<code>dsps_fir_f32</code>, <code>dsps_fird_f32</code>), FFT radix-2 (<code>dsps_fft2r_fc32</code>), fenêtrage (<code>dsps_wind_hann_f32</code>), produit scalaire (<code>dsps_dotprod_f32</code>).</p>
+
+<div class="mq-callout ok"><p>Comparer votre implémentation naïve à <code>dsps_fir_f32</code> sur le même jeu de données est un exercice de profilage utile : l&#39;écart mesuré illustre concrètement ce qu&#39;apporte une bibliothèque optimisée, et où se situe réellement le goulot d&#39;étranglement.</p>
+</div>
+<h2>Contraintes de la carte</h2>
+<div class="mq-divider"></div>
+<ul>
+<li>Le bloc à filtrer vient de l&#39;<a href="adc-dma.html">acquisition ADC + DMA</a> : $F_e$ entre 611 Hz et 83 333 Hz.</li>
+<li>Le tampon de travail doit rester en <strong>SRAM interne</strong> pour un traitement temps réel — voir <a href="buffering.html">Tampons et blocs</a>.</li>
+<li>Prévoyez de mesurer le temps de traitement d&#39;un bloc et de le comparer à $N / F_e$. Au-delà, vous perdez des échantillons silencieusement.</li>
+</ul>
+<h2>À compléter</h2>
+<div class="mq-divider"></div>
+
+<div class="mq-dropdown"><ul>
+<li>Génération des coefficients (Python <code>scipy.signal.firwin</code>, ou table fournie)</li>
+<li>Structure de données du buffer circulaire et gestion des bords de bloc</li>
+<li>Implémentation de référence et version optimisée</li>
+<li>Protocole de validation à l&#39;oscilloscope et au GBF</li>
+</ul>
+</div>
+      <!-- bottom previous/next navigation -->
+      <nav class="mq-page-nav" aria-label="Page navigation"><a class="mq-page-nav-link mq-page-nav-prev" href="buffering.html" aria-label="Previous page: Tampons et blocs"><span class="mq-page-nav-kicker">Previous</span><span class="mq-page-nav-title">↩ Tampons et blocs</span></a><a class="mq-page-nav-link mq-page-nav-next" href="mfcc.html" aria-label="Next page: MFCC"><span class="mq-page-nav-kicker">Next</span><span class="mq-page-nav-title">MFCC ↪</span></a></nav>
+    </main>
+    <!-- Sidebar summary (optional) -->
+    <aside class="mq-page-summary-slot" id="mq-page-summary-slot" hidden aria-label="Page summary"></aside>
+
+  </div>
+  
+  <!-- Footer -->
+  <footer class="mq-footer">
+    <!-- Remove if you wish, keeping it brings visibility to Marque :) -->
+    <span class="mq-footer-built">Built with <a href="https://getmarque.pages.dev">Marque</a></span>
+    
+    <!-- Repo button (Optional) -->
+    <span class="mq-footer-repo">  
+      <a class="mq-footer-repo-link" href="https://github.com/Loxed" aria-label="Open repository">
+        <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" stroke-width="1.5"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000"><path d="M16 22.0268V19.1568C16.0375 18.68 15.9731 18.2006 15.811 17.7506C15.6489 17.3006 15.3929 16.8902 15.06 16.5468C18.2 16.1968 21.5 15.0068 21.5 9.54679C21.4997 8.15062 20.9627 6.80799 20 5.79679C20.4558 4.5753 20.4236 3.22514 19.91 2.02679C19.91 2.02679 18.73 1.67679 16 3.50679C13.708 2.88561 11.292 2.88561 8.99999 3.50679C6.26999 1.67679 5.08999 2.02679 5.08999 2.02679C4.57636 3.22514 4.54413 4.5753 4.99999 5.79679C4.03011 6.81549 3.49251 8.17026 3.49999 9.57679C3.49999 14.9968 6.79998 16.1868 9.93998 16.5768C9.61098 16.9168 9.35725 17.3222 9.19529 17.7667C9.03334 18.2112 8.96679 18.6849 8.99999 19.1568V22.0268" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 20.0267C6 20.9999 3.5 20.0267 2 17.0267" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </a>
+    </span>
+</footer>
+
+  <script src="../index.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
++++
+title = Les trois niveaux
+nav = frameworks
+summary = true
++++
+
+# Les trois niveaux de programmation
+@divider
+
+Sur une carte comme l'Arduino UNO, il n'existe pratiquement que deux façons de faire : la fonction Arduino, ou le registre. Sur un SoC moderne comme l'ESP32-S3, il en existe **trois**, et savoir à quel niveau se placer est une compétence d'ingénieur en soi.
+
+@row niveaux
+  @card .primary
+    ## API Arduino
+    @divider
+    Simple, portable d'une carte à l'autre, mais peu configurable.
+  @end card
+
+  @card .secondary
+    ## Drivers ESP-IDF
+    @divider
+    Contrôle fin du périphérique, portable entre puces Espressif uniquement.
+  @end card
+
+  @card .tertiary
+    ## Registres
+    @divider
+    Contrôle total, mais code spécifique à une puce et non réutilisable.
+  @end card
+@end row niveaux
+
+@callout .info
+Plus on descend, plus on gagne en contrôle et en performance ; plus on perd en lisibilité, en portabilité et en temps de développement.
+@end callout
+
+## Les deux frameworks
+@divider
+
+**ESP-IDF** (*Espressif IoT Development Framework*) est le SDK natif et officiel du fabricant. Écrit en C, il offre un contrôle complet sur le silicium, une gestion fine de l'énergie et une intégration native avec FreeRTOS. C'est l'outil de référence pour le développement professionnel, mais sa courbe d'apprentissage est exigeante.
+
+**Arduino-ESP32** est une surcouche construite *par-dessus* ESP-IDF. Son objectif est de rendre la puce accessible via l'API Arduino familière (`setup()`, `loop()`, `digitalWrite()`). Il est idéal pour le prototypage rapide, car il masque la complexité de la configuration matérielle.
+
+@callout .ok
+Ces deux frameworks ne s'excluent pas. Arduino-ESP32 *étant* construit sur ESP-IDF, un croquis Arduino peut appeler directement n'importe quel driver ESP-IDF : il suffit d'inclure l'en-tête correspondant. Et rien n'interdit, dans ce même croquis, d'écrire directement dans un registre.
+@end callout
+
+## Comparaison
+@divider
+
+| | **API Arduino** | **Drivers ESP-IDF** | **Registres** |
+| --- | --- | --- | --- |
+| Exemple (GPIO) | `digitalWrite()` | `gpio_set_level()` | `GPIO_OUT_W1TS_REG` |
+| Portabilité | Toute carte Arduino | Puces Espressif | Une seule puce |
+| Contrôle | Faible | Élevé | Total |
+| Lisibilité | Excellente | Correcte | Faible |
+| Documentation | Arduino-ESP32 | ESP-IDF | TRM |
+
+@callout .info
+Il ne s'agit pas de choisir un niveau une fois pour toutes. Un programme bien écrit **mélange les trois** : Arduino pour l'initialisation et le débogage, ESP-IDF pour les périphériques critiques (timer d'échantillonnage, ADC continu), et les registres uniquement là où chaque cycle compte, typiquement à l'intérieur d'une ISR.
+@end callout
+
+## Correspondance par périphérique
+@divider
+
+| Fonction | API Arduino | Driver ESP-IDF | Registres |
+| --- | --- | --- | --- |
+| GPIO | `digitalWrite()` | `gpio_set_level()` | `GPIO_OUT_W1TS_REG` |
+| Interruption GPIO | `attachInterrupt()` | `gpio_isr_handler_add()` | `GPIO_PINn_REG` |
+| Timer | `timerBegin()` | `gptimer_new_timer()` | `TIMGn_TxCONFIG_REG` |
+| ADC | `analogRead()` | `adc_continuous_*` | `APB_SARADC_*` |
+| DMA | — | implicite dans le driver | `GDMA_*` |
+| Sortie analogique | `ledcWrite()` | `i2s_*` | — |
+
+## Rappels de C bas niveau
+@divider
+
+Dès que l'on descend au niveau des registres, on manipule des bits.
+
+| Opération | Idiome |
+| --- | --- |
+| Activer un bit | `REG \|= (1UL << n);` |
+| Effacer un bit | `REG &= ~(1UL << n);` |
+| Tester un bit | `if (REG & (1UL << n)) { ... }` |
+
+Le `\|=` est essentiel : il permet de modifier un bit **sans écraser** les autres bits du registre, qui configurent souvent d'autres fonctions du même périphérique.
+
+Trois mots-clés reviennent en permanence :
+
+- **`volatile`** — indique au compilateur que la variable peut être modifiée en dehors du flot normal du programme (par une ISR, ou par le matériel). Sans lui, le compilateur peut remplacer une lecture par une valeur mise en cache, et le programme ne verra jamais le changement. Toute variable partagée entre une ISR et le `loop()` doit être `volatile`.
+- **`IRAM_ATTR`** — force le placement d'une fonction en RAM interne plutôt qu'en flash. Indispensable pour une ISR, car la flash peut être temporairement inaccessible au moment où l'interruption survient.
+- **Les types de taille fixe** (`uint8_t`, `uint16_t`, `uint32_t`) — en embarqué on choisit explicitement la taille de ses variables. Un tampon de 4096 échantillons occupe 8 Ko en `uint16_t` contre 16 Ko en `int` : sur 512 Ko de SRAM, cela compte.
+
+@callout .warn
+**Piège classique du 16 bits.** Le produit de deux `uint16_t` ne tient pas dans un `uint16_t`. Lors d'un filtrage, il faut accumuler la convolution dans un `int32_t`, puis reconvertir en 16 bits par décalage.
+@end callout
+
+@callout .ok
+**Règle du module.** Écrire au niveau le plus haut qui satisfait la contrainte, et ne descendre que lorsqu'une **mesure** — pas une intuition — démontre que c'est nécessaire.
+@end callout
+
+@actions
+@[Arduino-ESP32](arduino.mq){.primary}
+@[ESP-IDF](esp-idf.mq){.secondary}
+@end actions

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NeuroBoard S3 — Caméra</title>
+
+<meta name="description" content="Carte de développement ESP32-S3 — documentation du module TS, ECE">
+
+<!-- 16x16 and 32x32 PNG favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png">
+
+<!-- Web manifest for PWA support -->
+<link rel="manifest" href="../favicon/site.webmanifest">
+
+<!-- Fallback for .ico (optional) -->
+<link rel="icon" href="../favicon/favicon.ico">
+
+<!-- Stylesheets -->
+<link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="../layout-sidebar.css">
+<link rel="stylesheet" id="mq-theme-stylesheet" href="../theme-rustique.css">
+<script>
+window.__mqThemeConfig = {"canSwitch":true,"defaultTheme":"rustique","pageTheme":"rustique","pageThemeHref":"../theme-rustique.css","storageKey":"mq:theme:neuroboard-s3","themes":{"rustique":{"href":"../theme-rustique.css","label":"Rustique"},"comte":{"href":"../theme-comte.css","label":"Comte"},"elmental":{"href":"../theme-elmental.css","label":"Elmental"},"gouda":{"href":"../theme-gouda.css","label":"Gouda"},"pycorino":{"href":"../theme-pycorino.css","label":"Pycorino"},"rubyola":{"href":"../theme-rubyola.css","label":"Rubyola"},"legacy/mida":{"href":"../theme-legacy-mida.css","label":"Legacy: Mida"}}};
+(function () {
+  var config = window.__mqThemeConfig;
+  if (!config || !config.canSwitch || !config.themes) return;
+
+  var selected = config.pageTheme || config.defaultTheme;
+  try {
+    var stored = window.localStorage && window.localStorage.getItem(config.storageKey);
+    if (stored && config.themes[stored]) selected = stored;
+  } catch (_) {}
+
+  var theme = config.themes[selected];
+  var link = document.getElementById('mq-theme-stylesheet');
+  if (!theme || !theme.href || !link) return;
+
+  link.href = theme.href;
+  link.setAttribute('data-theme-name', selected);
+  document.documentElement.setAttribute('data-mq-theme', selected);
+}());
+</script>
+</head>
+
+<body>
+  <!-- Header -->
+  <nav class="mq-nav">
+  <div class="mq-nav-head">
+    <a class="mq-nav-brand" href="../">NeuroBoard S3</a>
+    <button class="mq-search-toggle" type="button" aria-expanded="false" aria-controls="mq-search" aria-label="Open search" onclick="mqToggleSearch(this)">
+      <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M17 17L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+      <span class="mq-search-toggle-label">Search</span>
+      <span class="mq-search-toggle-shortcut" data-search-shortcut aria-hidden="true" hidden></span>
+    </button>
+    <details class="mq-theme-switcher" data-theme-switcher>
+      <summary class="mq-theme-toggle" aria-label="Change theme">
+        <span class="mq-theme-toggle-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg>
+</span>
+        <span class="mq-theme-toggle-label">Theme</span>
+        <span class="mq-theme-toggle-value" data-theme-current>Rustique</span>
+      </summary>
+      <div class="mq-theme-menu">
+        <label class="mq-theme-field">
+          <span class="mq-theme-field-label">Change Theme</span>
+          <select class="mq-theme-select" data-theme-select aria-label="Choose theme">
+            <option value="rustique" selected>Rustique (Default)</option><option value="comte">Comte</option><option value="elmental">Elmental</option><option value="gouda">Gouda</option><option value="pycorino">Pycorino</option><option value="rubyola">Rubyola</option><option value="legacy/mida">Legacy: Mida</option>
+          </select>
+        </label>
+      </div>
+    </details>
+  </div>
+  <div class="mq-nav-links">
+    <a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../"><span class="mq-nav-num">1.</span>NeuroBoard S3</a><a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../getting-started.html"><span class="mq-nav-num">2.</span>Prise en main</a>
+<div class="mq-nav-heading">Matériel</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../hardware.html"><span class="mq-nav-num">3.</span>Vue d&#39;ensemble</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/pinout.html"><span class="mq-nav-num">3.1</span>Brochage</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/constraints.html"><span class="mq-nav-num">3.2</span>Contraintes des broches</a></div></div>
+<div class="mq-nav-heading">Périphériques</div>
+<div class="mq-nav-group mq-nav-summary-group active"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../peripherals.html"><span class="mq-nav-num">4.</span>Périphériques</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link active" style="--mq-nav-level:1;" href="camera.html"><span class="mq-nav-num">4.1</span>Caméra</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="rgb-led.html"><span class="mq-nav-num">4.2</span>LED RGB</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="microsd.html"><span class="mq-nav-num">4.3</span>Carte microSD</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="boot-button.html"><span class="mq-nav-num">4.4</span>Bouton BOOT</a></div></div>
+<div class="mq-nav-heading">Développement</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../frameworks.html"><span class="mq-nav-num">5.</span>Frameworks</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../frameworks/arduino.html"><span class="mq-nav-num">5.1</span>Arduino-ESP32</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../frameworks/esp-idf.html"><span class="mq-nav-num">5.2</span>ESP-IDF</a></div></div>
+<div class="mq-nav-heading">Exemples</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../examples.html"><span class="mq-nav-num">6.</span>Exemples</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/adc-dma.html"><span class="mq-nav-num">6.1</span>Acquisition ADC + DMA</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/buffering.html"><span class="mq-nav-num">6.2</span>Tampons et blocs</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/fir.html"><span class="mq-nav-num">6.3</span>Filtrage FIR</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/mfcc.html"><span class="mq-nav-num">6.4</span>MFCC</a></div></div>
+<div class="mq-nav-heading">Référence</div>
+<a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../resources.html"><span class="mq-nav-num">7.</span>Ressources</a>
+  </div>
+  <div class="mq-nav-actions">
+    <button class="mq-nav-toggle" type="button" aria-expanded="false" aria-label="Toggle navigation" onclick="mqToggleNav(this)">☰</button>
+  </div>
+</nav>
+
+
+  <!-- Search Container -->
+  <div class="mq-search" id="mq-search" hidden aria-hidden="true">
+  <button class="mq-search-backdrop" type="button" aria-label="Close search" onclick="mqCloseSearch()"></button>
+  <section class="mq-search-panel" role="dialog" aria-modal="true" aria-labelledby="mq-search-title">
+    <div class="mq-search-head">
+      <svg class="mq-search-panel-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.5-3.5"></path>
+      </svg>
+      <label class="mq-search-input-wrap" for="mq-search-input">
+        <span class="mq-search-label" id="mq-search-title">Search this site</span>
+        <input id="mq-search-input" class="mq-search-input" type="search" placeholder="Search pages, headings, and content" autocomplete="off" spellcheck="false">
+      </label>
+      <button class="mq-search-close" type="button" aria-label="Close search" onclick="mqCloseSearch()">
+        <svg class="mq-search-close-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+        <span class="mq-search-close-label">Close</span>
+        <span class="mq-search-close-hint" data-search-close-hint aria-hidden="true" hidden></span>
+      </button>
+    </div>
+    <p class="mq-search-meta" id="mq-search-meta">Type to search titles, headings, and page content.</p>
+    <div class="mq-search-results" id="mq-search-results">
+      <div class="mq-search-empty">Search is ready. Try a page title, a section heading, or a phrase from the content.</div>
+    </div>
+  </section>
+</div>
+
+
+  <!-- Main Content -->
+  <div class="mq-page-shell" id="mq-page-shell" data-page-summary="true" style="--page-margin-left: auto; --page-margin-right: auto;">
+    <main class="mq-main">
+      <!-- dynamic mq content -->
+      <h1>Interface caméra</h1>
+<div class="mq-divider"></div>
+<p>Le connecteur FPC porte une interface <strong>DVP</strong> (parallèle 8 bits) et un bus de contrôle <strong>SCCB</strong>.</p>
+
+<div class="mq-row" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><div class="mq-card primary"><h2>OV3660 <span class="mq-badge ok">conçue pour</span></h2>
+<div class="mq-divider"></div>
+<p>Capteur 3 Mpx, jusqu&#39;à <strong>QXGA</strong> 2048×1536.</p>
+</div>
+
+<div class="mq-card"><h2>OV2640 <span class="mq-badge">compatible</span></h2>
+<div class="mq-divider"></div>
+<p>Capteur 2 Mpx au brochage identique, jusqu&#39;à <strong>UXGA</strong> 1600×1200. Même pilote.</p>
+</div></div>
+<h2>Mapping des broches</h2>
+<div class="mq-divider"></div>
+<div class="mq-table-wrap"><table>
+<thead>
+<tr>
+<th>Signal caméra</th>
+<th align="center">GPIO</th>
+<th>Remarque</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SIOD (SCCB SDA)</td>
+<td align="center">GPIO4</td>
+<td>Tirage monté sur carte</td>
+</tr>
+<tr>
+<td>SIOC (SCCB SCL)</td>
+<td align="center">GPIO5</td>
+<td>Tirage monté sur carte</td>
+</tr>
+<tr>
+<td>VSYNC</td>
+<td align="center">GPIO6</td>
+<td></td>
+</tr>
+<tr>
+<td>HREF</td>
+<td align="center">GPIO7</td>
+<td></td>
+</tr>
+<tr>
+<td>PCLK</td>
+<td align="center">GPIO8</td>
+<td></td>
+</tr>
+<tr>
+<td>XCLK</td>
+<td align="center">GPIO16</td>
+<td>Horloge maître générée par l&#39;ESP32-S3 (LEDC)</td>
+</tr>
+<tr>
+<td>D0 (Y2)</td>
+<td align="center">GPIO10</td>
+<td></td>
+</tr>
+<tr>
+<td>D1 (Y3)</td>
+<td align="center">GPIO12</td>
+<td></td>
+</tr>
+<tr>
+<td>D2 (Y4)</td>
+<td align="center">GPIO13</td>
+<td></td>
+</tr>
+<tr>
+<td>D3 (Y5)</td>
+<td align="center">GPIO11</td>
+<td></td>
+</tr>
+<tr>
+<td>D4 (Y6)</td>
+<td align="center">GPIO9</td>
+<td></td>
+</tr>
+<tr>
+<td>D5 (Y7)</td>
+<td align="center">GPIO18</td>
+<td></td>
+</tr>
+<tr>
+<td>D6 (Y8)</td>
+<td align="center">GPIO17</td>
+<td></td>
+</tr>
+<tr>
+<td>D7 (Y9)</td>
+<td align="center">GPIO15</td>
+<td></td>
+</tr>
+</tbody></table>
+</div>
+<div class="mq-callout danger"><p>Les lignes de données ne sont <strong>pas</strong> dans l&#39;ordre des GPIO. Copier une définition de broches depuis une autre carte caméra ESP32-S3 (ESP32-S3-EYE, Freenove, XIAO Sense…) produit une image brouillée ou noire. Utilisez le mapping ci-dessus.</p>
+</div>
+
+<div class="mq-callout info"><p><code>PWDN</code> et <code>RESET</code> ne sont pas ramenés sur le connecteur. Déclarez-les à <code>-1</code> dans la configuration du pilote.</p>
+</div>
+<h2>Dépendance</h2>
+<div class="mq-divider"></div>
+<p>Le pilote <a href="https://github.com/espressif/esp32-camera">esp32-camera</a> est fourni avec Arduino-ESP32 (<code>#include &quot;esp_camera.h&quot;</code>). Sous PlatformIO il est déjà présent dans le core ; aucune déclaration <code>lib_deps</code> n&#39;est nécessaire.</p>
+<p>Sous ESP-IDF, ajoutez-le comme composant managé :</p>
+<div class="mq-code-block" data-lang="sh"><div class="mq-code-head"><span class="mq-code-lang">sh</span><button class="mq-code-copy" type="button" aria-label="Copy sh code">Copy</button></div><pre><code class="hljs language-sh">idf.py add-dependency <span class="hljs-string">&quot;espressif/esp32-camera&quot;</span></code></pre></div><h2>Configuration du pilote</h2>
+<div class="mq-divider"></div>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;esp_camera.h&quot;</span></span>
+
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_PWDN    -1   <span class="hljs-comment">// non connectée</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_RESET   -1   <span class="hljs-comment">// non connectée</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_XCLK    16</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_SIOD     4</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_SIOC     5</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_D7      15</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_D6      17</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_D5      18</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_D4       9</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_D3      11</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_D2      13</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_D1      12</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_D0      10</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_VSYNC    6</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_HREF     7</span>
+<span class="hljs-meta">#<span class="hljs-keyword">define</span> CAM_PIN_PCLK     8</span>
+
+<span class="hljs-type">static</span> <span class="hljs-type">camera_config_t</span> camera_config = {
+    .pin_pwdn     = CAM_PIN_PWDN,
+    .pin_reset    = CAM_PIN_RESET,
+    .pin_xclk     = CAM_PIN_XCLK,
+    .pin_sccb_sda = CAM_PIN_SIOD,
+    .pin_sccb_scl = CAM_PIN_SIOC,
+    .pin_d7 = CAM_PIN_D7, .pin_d6 = CAM_PIN_D6,
+    .pin_d5 = CAM_PIN_D5, .pin_d4 = CAM_PIN_D4,
+    .pin_d3 = CAM_PIN_D3, .pin_d2 = CAM_PIN_D2,
+    .pin_d1 = CAM_PIN_D1, .pin_d0 = CAM_PIN_D0,
+    .pin_vsync = CAM_PIN_VSYNC,
+    .pin_href  = CAM_PIN_HREF,
+    .pin_pclk  = CAM_PIN_PCLK,
+
+    .xclk_freq_hz = <span class="hljs-number">20000000</span>,        <span class="hljs-comment">// 20 MHz ; descendre à 10 MHz si instable</span>
+    .ledc_timer   = LEDC_TIMER_0,
+    .ledc_channel = LEDC_CHANNEL_0,
+
+    .pixel_format = PIXFORMAT_JPEG,  <span class="hljs-comment">// RGB565 / GRAYSCALE pour le traitement</span>
+    .frame_size   = FRAMESIZE_SVGA,
+    .jpeg_quality = <span class="hljs-number">12</span>,              <span class="hljs-comment">// 0-63, plus bas = meilleure qualité</span>
+    .fb_count     = <span class="hljs-number">2</span>,               <span class="hljs-comment">// 2 exige la PSRAM</span>
+    .fb_location  = CAMERA_FB_IN_PSRAM,
+    .grab_mode    = CAMERA_GRAB_WHEN_EMPTY,
+};
+
+<span class="hljs-type">void</span> <span class="hljs-title function_">app_camera_init</span><span class="hljs-params">(<span class="hljs-type">void</span>)</span>
+{
+    <span class="hljs-type">esp_err_t</span> err = esp_camera_init(&amp;camera_config);
+    <span class="hljs-keyword">if</span> (err != ESP_OK) {
+        ESP_LOGE(<span class="hljs-string">&quot;cam&quot;</span>, <span class="hljs-string">&quot;init échouée : 0x%x&quot;</span>, err);
+    }
+}</code></pre></div><h2>Capturer une image</h2>
+<div class="mq-divider"></div>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-type">camera_fb_t</span> *fb = esp_camera_fb_get();
+<span class="hljs-keyword">if</span> (!fb) {
+    ESP_LOGE(<span class="hljs-string">&quot;cam&quot;</span>, <span class="hljs-string">&quot;capture échouée&quot;</span>);
+    <span class="hljs-keyword">return</span>;
+}
+
+<span class="hljs-comment">// fb-&gt;buf   : données brutes</span>
+<span class="hljs-comment">// fb-&gt;len   : taille en octets</span>
+<span class="hljs-comment">// fb-&gt;width / fb-&gt;height / fb-&gt;format</span>
+
+esp_camera_fb_return(fb);   <span class="hljs-comment">// OBLIGATOIRE</span></code></pre></div>
+<div class="mq-callout danger"><p>Chaque <code>esp_camera_fb_get()</code> doit être suivi d&#39;un <code>esp_camera_fb_return()</code>. Oublier la restitution épuise les tampons en <code>fb_count</code> captures, après quoi <code>esp_camera_fb_get()</code> renvoie <code>NULL</code> en permanence — un symptôme qui ressemble à une panne matérielle.</p>
+</div>
+<h2>Choisir le format</h2>
+<div class="mq-divider"></div>
+<div class="mq-table-wrap"><table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Usage</th>
+<th>Coût</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PIXFORMAT_JPEG</code></td>
+<td>Stockage, transmission réseau</td>
+<td>Compression matérielle, tampon compact</td>
+</tr>
+<tr>
+<td><code>PIXFORMAT_RGB565</code></td>
+<td>Affichage, traitement couleur</td>
+<td>2 octets/pixel, pas de décodage</td>
+</tr>
+<tr>
+<td><code>PIXFORMAT_GRAYSCALE</code></td>
+<td>Vision, entrée de modèle</td>
+<td>1 octet/pixel, le plus léger</td>
+</tr>
+</tbody></table>
+</div>
+<div class="mq-callout ok"><p>Pour les charges de travail d&#39;apprentissage automatique, utilisez <code>PIXFORMAT_GRAYSCALE</code> ou <code>PIXFORMAT_RGB565</code> avec un <code>frame_size</code> réduit : les images sont alors directement exploitables par le modèle, sans étape de décodage JPEG.</p>
+</div>
+<h2>Dépannage</h2>
+<div class="mq-divider"></div>
+
+<div class="mq-dropdown"><p>Les lignes de données ne suivent pas l&#39;ordre des GPIO sur cette carte. Vérifiez chaque <code>CAM_PIN_Dx</code> contre le <a href="#mapping-des-broches">mapping</a> plutôt que de réutiliser une définition venue d&#39;une autre carte.</p>
+</div>
+
+<div class="mq-dropdown"><p>La PSRAM n&#39;est pas visible. Vérifiez <code>board_build.arduino.memory_type = qio_opi</code> dans <code>platformio.ini</code>, et <code>.fb_location = CAMERA_FB_IN_PSRAM</code>.</p>
+</div>
+
+<div class="mq-dropdown"><p>Descendez <code>.xclk_freq_hz</code> de 20 MHz à 10 MHz. Vérifiez aussi que l&#39;alimentation 5 V délivre au moins 500 mA : une capture pleine résolution avec Wi-Fi provoque des chutes de tension.</p>
+</div>
+
+<div class="mq-dropdown"><p>Tampons non restitués. Chaque capture doit être suivie d&#39;un <code>esp_camera_fb_return(fb)</code>, y compris sur les chemins d&#39;erreur.</p>
+</div>
+
+<div class="mq-dropdown"><p><code>ESP_ERR_NOT_FOUND</code> : le capteur ne répond pas sur le bus SCCB. Contrôlez le sens de la nappe (contacts vers la carte) et que le loquet est bien refermé. Débranchez toujours la caméra carte hors tension.</p>
+</div>
+<h2>Broches occupées</h2>
+<div class="mq-divider"></div>
+
+<div class="mq-callout warn"><p>Caméra connectée, ces 14 broches sont indisponibles : <strong>GPIO4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18</strong>. Il ne reste que GPIO1, GPIO2, GPIO14, GPIO21, GPIO42, GPIO47 et GPIO48 pour votre montage. Voir <a href="constraints.html">Contraintes des broches</a>.</p>
+</div>
+      <!-- bottom previous/next navigation -->
+      <nav class="mq-page-nav" aria-label="Page navigation"><a class="mq-page-nav-link mq-page-nav-prev" href="../peripherals.html" aria-label="Previous page: Périphériques"><span class="mq-page-nav-kicker">Previous</span><span class="mq-page-nav-title">↩ Périphériques</span></a><a class="mq-page-nav-link mq-page-nav-next" href="rgb-led.html" aria-label="Next page: LED RGB"><span class="mq-page-nav-kicker">Next</span><span class="mq-page-nav-title">LED RGB ↪</span></a></nav>
+    </main>
+    <!-- Sidebar summary (optional) -->
+    <aside class="mq-page-summary-slot" id="mq-page-summary-slot" hidden aria-label="Page summary"></aside>
+
+  </div>
+  
+  <!-- Footer -->
+  <footer class="mq-footer">
+    <!-- Remove if you wish, keeping it brings visibility to Marque :) -->
+    <span class="mq-footer-built">Built with <a href="https://getmarque.pages.dev">Marque</a></span>
+    
+    <!-- Repo button (Optional) -->
+    <span class="mq-footer-repo">  
+      <a class="mq-footer-repo-link" href="https://github.com/Loxed" aria-label="Open repository">
+        <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" stroke-width="1.5"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000"><path d="M16 22.0268V19.1568C16.0375 18.68 15.9731 18.2006 15.811 17.7506C15.6489 17.3006 15.3929 16.8902 15.06 16.5468C18.2 16.1968 21.5 15.0068 21.5 9.54679C21.4997 8.15062 20.9627 6.80799 20 5.79679C20.4558 4.5753 20.4236 3.22514 19.91 2.02679C19.91 2.02679 18.73 1.67679 16 3.50679C13.708 2.88561 11.292 2.88561 8.99999 3.50679C6.26999 1.67679 5.08999 2.02679 5.08999 2.02679C4.57636 3.22514 4.54413 4.5753 4.99999 5.79679C4.03011 6.81549 3.49251 8.17026 3.49999 9.57679C3.49999 14.9968 6.79998 16.1868 9.93998 16.5768C9.61098 16.9168 9.35725 17.3222 9.19529 17.7667C9.03334 18.2112 8.96679 18.6849 8.99999 19.1568V22.0268" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 20.0267C6 20.9999 3.5 20.0267 2 17.0267" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </a>
+    </span>
+</footer>
+
+  <script src="../index.js"></script>
+</body>
+</html>

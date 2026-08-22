@@ -1,0 +1,82 @@
++++
+title = MFCC
+nav = mfcc
+summary = true
++++
+
+# MFCC
+@divider
+
+@callout .warn
+**Page volontairement incomplète.** Le calcul des MFCC dépend d'un TP dont je ne connais pas le contenu. Cette page pose la chaîne de traitement et les contraintes de la carte, sans implémentation. À compléter — dites-moi le TP visé et ce qui doit rester à la charge des étudiants.
+@end callout
+
+Les **MFCC** (*Mel-Frequency Cepstral Coefficients*) sont une représentation compacte du contenu spectral d'un signal audio, largement utilisée comme entrée de modèles de reconnaissance. C'est le point où la chaîne d'acquisition rejoint la partie « neuro » de la carte.
+
+## La chaîne
+@divider
+
+@container
+  @step
+  **Fenêtrage** — découper le signal en trames se recouvrant (typiquement 25 ms de trame, 10 ms de pas), avec une fenêtre de Hann ou de Hamming.
+  @end step
+
+  @step
+  **FFT** — passer chaque trame dans le domaine fréquentiel, puis en calculer le spectre de puissance.
+  @end step
+
+  @step
+  **Banc de filtres Mel** — projeter le spectre sur une échelle Mel, qui approxime la résolution fréquentielle de l'oreille : fine en bas, grossière en haut.
+  @end step
+
+  @step
+  **Logarithme** — compresser la dynamique des énergies de chaque bande.
+  @end step
+
+  @step
+  **DCT** — décorréler les bandes et ne garder que les premiers coefficients, typiquement 13.
+  @end step
+@end container
+
+## Contraintes de la carte
+@divider
+
+@callout .danger
+`sample_freq_hz` est borné à **83 333 Hz** sur ESP32-S3. Les fréquences audio usuelles (16 kHz, 44,1 kHz, 48 kHz) sont accessibles, mais l'ADC interne reste un ADC généraliste : pour de l'audio, un microphone I2S numérique donne un bien meilleur rapport signal/bruit qu'un microphone analogique lu par l'ADC. Le choix mérite d'être posé explicitement avant de construire le TP.
+@end callout
+
+- La taille de trame doit être une **puissance de deux** pour la FFT radix-2 d'esp-dsp.
+- À 16 kHz, une trame de 25 ms représente 400 échantillons → 512 avec bourrage.
+- Les tables (fenêtre, banc Mel, matrice DCT) se calculent **une fois** au démarrage, pas à chaque trame.
+
+## Outils disponibles
+@divider
+
+@row outils
+  @card .primary
+    ## esp-dsp
+    @divider
+    FFT, fenêtrage, produit scalaire, optimisés pour le LX7. Suffisant pour construire les MFCC à la main.
+  @end card
+
+  @card .secondary
+    ## esp-sr
+    @divider
+    Pile de reconnaissance vocale d'Espressif, qui embarque son propre extracteur de caractéristiques. Plus opaque, mais prêt à l'emploi.
+  @end card
+@end row outils
+
+@callout .info
+Construire les MFCC à partir d'esp-dsp est plus instructif ; utiliser esp-sr est plus rapide. Le choix dépend de ce que le TP doit enseigner — la chaîne de traitement, ou son intégration dans un modèle.
+@end callout
+
+## À compléter
+@divider
+
+@dropdown "Éléments à ajouter selon vos choix pédagogiques"
+- Source audio retenue (ADC analogique ou microphone I2S)
+- Paramètres : taille de trame, recouvrement, nombre de bandes Mel, nombre de coefficients
+- Pré-accentuation et normalisation
+- Jeu de données de validation et méthode de comparaison avec `librosa` côté PC
+- Modèle aval, s'il y en a un
+@end dropdown

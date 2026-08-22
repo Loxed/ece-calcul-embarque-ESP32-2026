@@ -1,0 +1,152 @@
++++
+title = ESP-IDF
+nav = esp-idf
+summary = true
++++
+
+# ESP-IDF
+@divider
+
+Le SDK natif d'Espressif. On peut l'utiliser seul (`framework = espidf`) ou appeler ses drivers depuis un croquis Arduino — c'est le mode privilégié dans le module.
+
+## Projet PlatformIO en ESP-IDF pur
+@divider
+
+```ini
+[env:neuroboard-s3-idf]
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+board = esp32-s3-devkitc-1
+framework = espidf
+
+board_build.arduino.memory_type = qio_opi
+board_upload.flash_size = 16MB
+board_build.partitions = default_16MB.csv
+
+monitor_speed = 115200
+```
+
+La PSRAM doit également être activée dans `sdkconfig` :
+
+```
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+```
+
+@callout .warn
+`CONFIG_SPIRAM_MODE_OCT` est l'équivalent `sdkconfig` de « PSRAM OPI ». En mode QUAD sur un N16R8, la PSRAM n'est pas détectée et `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` renvoie `NULL`.
+@end callout
+
+## GPIO
+@divider
+
+```c
+#include "driver/gpio.h"
+
+gpio_config_t cfg = {
+    .pin_bit_mask = (1ULL << 21),
+    .mode         = GPIO_MODE_OUTPUT,
+    .pull_up_en   = GPIO_PULLUP_DISABLE,
+    .pull_down_en = GPIO_PULLDOWN_DISABLE,
+    .intr_type    = GPIO_INTR_DISABLE,
+};
+gpio_config(&cfg);
+gpio_set_level(21, 1);
+```
+
+## Interruption GPIO
+@divider
+
+```c
+#include "driver/gpio.h"
+
+static volatile uint32_t compteur = 0;
+
+static void IRAM_ATTR isr_handler(void *arg) {
+    compteur++;
+}
+
+void bouton_init(void)
+{
+    gpio_config_t cfg = {
+        .pin_bit_mask = (1ULL << 0),
+        .mode         = GPIO_MODE_INPUT,
+        .pull_up_en   = GPIO_PULLUP_ENABLE,
+        .intr_type    = GPIO_INTR_NEGEDGE,
+    };
+    gpio_config(&cfg);
+
+    gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
+    gpio_isr_handler_add(0, isr_handler, NULL);
+}
+```
+
+@callout .info
+`gpio_install_isr_service()` ne s'appelle **qu'une fois** pour tout le programme. Un second appel renvoie `ESP_ERR_INVALID_STATE`. Chaque broche supplémentaire s'ajoute ensuite avec `gpio_isr_handler_add()`.
+@end callout
+
+## Timer — driver GPTimer
+@divider
+
+Le driver `GPTimer` expose ce que l'API Arduino décide à votre place : source d'horloge, résolution, sens de comptage, valeur d'alarme, auto-rechargement, priorité et placement de l'interruption.
+
+```c
+#include "driver/gptimer.h"
+
+static bool IRAM_ATTR on_alarm(gptimer_handle_t t,
+                               const gptimer_alarm_event_data_t *e,
+                               void *arg)
+{
+    // traitement très court
+    return false;    // true si un changement de contexte est requis
+}
+
+void timer_init(uint32_t fe_hz)
+{
+    gptimer_handle_t timer = NULL;
+
+    gptimer_config_t cfg = {
+        .clk_src       = GPTIMER_CLK_SRC_XTAL,   // stable, indépendant du DFS
+        .direction     = GPTIMER_COUNT_UP,
+        .resolution_hz = 1000000,                // 1 MHz → 1 tick = 1 µs
+    };
+    ESP_ERROR_CHECK(gptimer_new_timer(&cfg, &timer));
+
+    gptimer_event_callbacks_t cbs = { .on_alarm = on_alarm };
+    ESP_ERROR_CHECK(gptimer_register_event_callbacks(timer, &cbs, NULL));
+
+    gptimer_alarm_config_t alarme = {
+        .alarm_count                = 1000000 / fe_hz,
+        .reload_count               = 0,
+        .flags.auto_reload_on_alarm = true,
+    };
+    ESP_ERROR_CHECK(gptimer_set_alarm_action(timer, &alarme));
+
+    ESP_ERROR_CHECK(gptimer_enable(timer));
+    ESP_ERROR_CHECK(gptimer_start(timer));
+}
+```
+
+@callout .info
+Le choix de `clk_src` n'est pas anodin. La fréquence **APB** (80 MHz) peut varier si la gestion dynamique de fréquence (DFS) est activée, alors que **XTAL** (40 MHz) reste stable. Dès qu'on vise une $F_e$ précise, préférez XTAL.
+@end callout
+
+## Le matériel timer de l'ESP32-S3
+@divider
+
+Deux groupes de timers, chacun comportant deux timers génériques, soit **quatre timers**. Ce sont des compteurs **54 bits** pilotés par des prescalers **16 bits**, capables de compter vers le haut ou vers le bas, avec rechargement automatique à l'alarme.
+
+$$f_{\text{comptage}} = \frac{f_{\text{source}}}{\text{prescaler}} \qquad N_{\text{alarme}} = \frac{f_{\text{comptage}}}{F_e}$$
+
+@callout .ok
+Un compteur 54 bits à 1 MHz déborde au bout d'environ **570 ans**. Contrairement aux timers 16 bits des petits AVR, le débordement n'est pas une contrainte de conception ici.
+@end callout
+
+## Le niveau registre
+@divider
+
+Configurer un timer group à la main demande de manipuler une dizaine de registres (`TIMGn_TxCONFIG_REG`, `TIMGn_TxALARMLO_REG`, `TIMGn_TxLOADLO_REG`…) pour un résultat strictement identique à celui du driver. Le TRM en donne le détail au chapitre *Timer Group*.
+
+@callout .info
+Sur ESP32-S3, descendre au niveau registre pour un timer ou une interruption GPIO n'apporte quasiment rien : le driver ESP-IDF expose déjà tout ce que le matériel sait faire. **Savoir qu'un niveau existe, c'est aussi savoir quand il est inutile d'y descendre.**
+@end callout

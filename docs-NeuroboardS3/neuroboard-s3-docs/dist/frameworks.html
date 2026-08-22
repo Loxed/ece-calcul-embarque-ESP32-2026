@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NeuroBoard S3 — Les trois niveaux</title>
+
+<meta name="description" content="Carte de développement ESP32-S3 — documentation du module TS, ECE">
+
+<!-- 16x16 and 32x32 PNG favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+
+<!-- Web manifest for PWA support -->
+<link rel="manifest" href="favicon/site.webmanifest">
+
+<!-- Fallback for .ico (optional) -->
+<link rel="icon" href="favicon/favicon.ico">
+
+<!-- Stylesheets -->
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="layout-sidebar.css">
+<link rel="stylesheet" id="mq-theme-stylesheet" href="theme-rustique.css">
+<script>
+window.__mqThemeConfig = {"canSwitch":true,"defaultTheme":"rustique","pageTheme":"rustique","pageThemeHref":"theme-rustique.css","storageKey":"mq:theme:neuroboard-s3","themes":{"rustique":{"href":"theme-rustique.css","label":"Rustique"},"comte":{"href":"theme-comte.css","label":"Comte"},"elmental":{"href":"theme-elmental.css","label":"Elmental"},"gouda":{"href":"theme-gouda.css","label":"Gouda"},"pycorino":{"href":"theme-pycorino.css","label":"Pycorino"},"rubyola":{"href":"theme-rubyola.css","label":"Rubyola"},"legacy/mida":{"href":"theme-legacy-mida.css","label":"Legacy: Mida"}}};
+(function () {
+  var config = window.__mqThemeConfig;
+  if (!config || !config.canSwitch || !config.themes) return;
+
+  var selected = config.pageTheme || config.defaultTheme;
+  try {
+    var stored = window.localStorage && window.localStorage.getItem(config.storageKey);
+    if (stored && config.themes[stored]) selected = stored;
+  } catch (_) {}
+
+  var theme = config.themes[selected];
+  var link = document.getElementById('mq-theme-stylesheet');
+  if (!theme || !theme.href || !link) return;
+
+  link.href = theme.href;
+  link.setAttribute('data-theme-name', selected);
+  document.documentElement.setAttribute('data-mq-theme', selected);
+}());
+</script>
+</head>
+
+<body>
+  <!-- Header -->
+  <nav class="mq-nav">
+  <div class="mq-nav-head">
+    <a class="mq-nav-brand" href="./">NeuroBoard S3</a>
+    <button class="mq-search-toggle" type="button" aria-expanded="false" aria-controls="mq-search" aria-label="Open search" onclick="mqToggleSearch(this)">
+      <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M17 17L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+      <span class="mq-search-toggle-label">Search</span>
+      <span class="mq-search-toggle-shortcut" data-search-shortcut aria-hidden="true" hidden></span>
+    </button>
+    <details class="mq-theme-switcher" data-theme-switcher>
+      <summary class="mq-theme-toggle" aria-label="Change theme">
+        <span class="mq-theme-toggle-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg>
+</span>
+        <span class="mq-theme-toggle-label">Theme</span>
+        <span class="mq-theme-toggle-value" data-theme-current>Rustique</span>
+      </summary>
+      <div class="mq-theme-menu">
+        <label class="mq-theme-field">
+          <span class="mq-theme-field-label">Change Theme</span>
+          <select class="mq-theme-select" data-theme-select aria-label="Choose theme">
+            <option value="rustique" selected>Rustique (Default)</option><option value="comte">Comte</option><option value="elmental">Elmental</option><option value="gouda">Gouda</option><option value="pycorino">Pycorino</option><option value="rubyola">Rubyola</option><option value="legacy/mida">Legacy: Mida</option>
+          </select>
+        </label>
+      </div>
+    </details>
+  </div>
+  <div class="mq-nav-links">
+    <a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="./"><span class="mq-nav-num">1.</span>NeuroBoard S3</a><a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="getting-started.html"><span class="mq-nav-num">2.</span>Prise en main</a>
+<div class="mq-nav-heading">Matériel</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="hardware.html"><span class="mq-nav-num">3.</span>Vue d&#39;ensemble</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="hardware/pinout.html"><span class="mq-nav-num">3.1</span>Brochage</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="hardware/constraints.html"><span class="mq-nav-num">3.2</span>Contraintes des broches</a></div></div>
+<div class="mq-nav-heading">Périphériques</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="peripherals.html"><span class="mq-nav-num">4.</span>Périphériques</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="peripherals/camera.html"><span class="mq-nav-num">4.1</span>Caméra</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="peripherals/rgb-led.html"><span class="mq-nav-num">4.2</span>LED RGB</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="peripherals/microsd.html"><span class="mq-nav-num">4.3</span>Carte microSD</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="peripherals/boot-button.html"><span class="mq-nav-num">4.4</span>Bouton BOOT</a></div></div>
+<div class="mq-nav-heading">Développement</div>
+<div class="mq-nav-group mq-nav-summary-group active"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link active" style="--mq-nav-level:0;" href="frameworks.html"><span class="mq-nav-num">5.</span>Frameworks</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="frameworks/arduino.html"><span class="mq-nav-num">5.1</span>Arduino-ESP32</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="frameworks/esp-idf.html"><span class="mq-nav-num">5.2</span>ESP-IDF</a></div></div>
+<div class="mq-nav-heading">Exemples</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="examples.html"><span class="mq-nav-num">6.</span>Exemples</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="examples/adc-dma.html"><span class="mq-nav-num">6.1</span>Acquisition ADC + DMA</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="examples/buffering.html"><span class="mq-nav-num">6.2</span>Tampons et blocs</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="examples/fir.html"><span class="mq-nav-num">6.3</span>Filtrage FIR</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="examples/mfcc.html"><span class="mq-nav-num">6.4</span>MFCC</a></div></div>
+<div class="mq-nav-heading">Référence</div>
+<a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="resources.html"><span class="mq-nav-num">7.</span>Ressources</a>
+  </div>
+  <div class="mq-nav-actions">
+    <button class="mq-nav-toggle" type="button" aria-expanded="false" aria-label="Toggle navigation" onclick="mqToggleNav(this)">☰</button>
+  </div>
+</nav>
+
+
+  <!-- Search Container -->
+  <div class="mq-search" id="mq-search" hidden aria-hidden="true">
+  <button class="mq-search-backdrop" type="button" aria-label="Close search" onclick="mqCloseSearch()"></button>
+  <section class="mq-search-panel" role="dialog" aria-modal="true" aria-labelledby="mq-search-title">
+    <div class="mq-search-head">
+      <svg class="mq-search-panel-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.5-3.5"></path>
+      </svg>
+      <label class="mq-search-input-wrap" for="mq-search-input">
+        <span class="mq-search-label" id="mq-search-title">Search this site</span>
+        <input id="mq-search-input" class="mq-search-input" type="search" placeholder="Search pages, headings, and content" autocomplete="off" spellcheck="false">
+      </label>
+      <button class="mq-search-close" type="button" aria-label="Close search" onclick="mqCloseSearch()">
+        <svg class="mq-search-close-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+        <span class="mq-search-close-label">Close</span>
+        <span class="mq-search-close-hint" data-search-close-hint aria-hidden="true" hidden></span>
+      </button>
+    </div>
+    <p class="mq-search-meta" id="mq-search-meta">Type to search titles, headings, and page content.</p>
+    <div class="mq-search-results" id="mq-search-results">
+      <div class="mq-search-empty">Search is ready. Try a page title, a section heading, or a phrase from the content.</div>
+    </div>
+  </section>
+</div>
+
+
+  <!-- Main Content -->
+  <div class="mq-page-shell" id="mq-page-shell" data-page-summary="true" style="--page-margin-left: auto; --page-margin-right: auto;">
+    <main class="mq-main">
+      <!-- dynamic mq content -->
+      <h1>Les trois niveaux de programmation</h1>
+<div class="mq-divider"></div>
+<p>Sur une carte comme l&#39;Arduino UNO, il n&#39;existe pratiquement que deux façons de faire : la fonction Arduino, ou le registre. Sur un SoC moderne comme l&#39;ESP32-S3, il en existe <strong>trois</strong>, et savoir à quel niveau se placer est une compétence d&#39;ingénieur en soi.</p>
+
+<div class="mq-row" style="grid-template-columns: repeat(3, minmax(0, 1fr));"><div class="mq-card primary"><h2>API Arduino</h2>
+<div class="mq-divider"></div>
+<p>Simple, portable d&#39;une carte à l&#39;autre, mais peu configurable.</p>
+</div>
+
+<div class="mq-card secondary"><h2>Drivers ESP-IDF</h2>
+<div class="mq-divider"></div>
+<p>Contrôle fin du périphérique, portable entre puces Espressif uniquement.</p>
+</div>
+
+<div class="mq-card tertiary"><h2>Registres</h2>
+<div class="mq-divider"></div>
+<p>Contrôle total, mais code spécifique à une puce et non réutilisable.</p>
+</div></div>
+
+<div class="mq-callout info"><p>Plus on descend, plus on gagne en contrôle et en performance ; plus on perd en lisibilité, en portabilité et en temps de développement.</p>
+</div>
+<h2>Les deux frameworks</h2>
+<div class="mq-divider"></div>
+<p><strong>ESP-IDF</strong> (<em>Espressif IoT Development Framework</em>) est le SDK natif et officiel du fabricant. Écrit en C, il offre un contrôle complet sur le silicium, une gestion fine de l&#39;énergie et une intégration native avec FreeRTOS. C&#39;est l&#39;outil de référence pour le développement professionnel, mais sa courbe d&#39;apprentissage est exigeante.</p>
+<p><strong>Arduino-ESP32</strong> est une surcouche construite <em>par-dessus</em> ESP-IDF. Son objectif est de rendre la puce accessible via l&#39;API Arduino familière (<code>setup()</code>, <code>loop()</code>, <code>digitalWrite()</code>). Il est idéal pour le prototypage rapide, car il masque la complexité de la configuration matérielle.</p>
+
+<div class="mq-callout ok"><p>Ces deux frameworks ne s&#39;excluent pas. Arduino-ESP32 <em>étant</em> construit sur ESP-IDF, un croquis Arduino peut appeler directement n&#39;importe quel driver ESP-IDF : il suffit d&#39;inclure l&#39;en-tête correspondant. Et rien n&#39;interdit, dans ce même croquis, d&#39;écrire directement dans un registre.</p>
+</div>
+<h2>Comparaison</h2>
+<div class="mq-divider"></div>
+<div class="mq-table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th><strong>API Arduino</strong></th>
+<th><strong>Drivers ESP-IDF</strong></th>
+<th><strong>Registres</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Exemple (GPIO)</td>
+<td><code>digitalWrite()</code></td>
+<td><code>gpio_set_level()</code></td>
+<td><code>GPIO_OUT_W1TS_REG</code></td>
+</tr>
+<tr>
+<td>Portabilité</td>
+<td>Toute carte Arduino</td>
+<td>Puces Espressif</td>
+<td>Une seule puce</td>
+</tr>
+<tr>
+<td>Contrôle</td>
+<td>Faible</td>
+<td>Élevé</td>
+<td>Total</td>
+</tr>
+<tr>
+<td>Lisibilité</td>
+<td>Excellente</td>
+<td>Correcte</td>
+<td>Faible</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td>Arduino-ESP32</td>
+<td>ESP-IDF</td>
+<td>TRM</td>
+</tr>
+</tbody></table>
+</div>
+<div class="mq-callout info"><p>Il ne s&#39;agit pas de choisir un niveau une fois pour toutes. Un programme bien écrit <strong>mélange les trois</strong> : Arduino pour l&#39;initialisation et le débogage, ESP-IDF pour les périphériques critiques (timer d&#39;échantillonnage, ADC continu), et les registres uniquement là où chaque cycle compte, typiquement à l&#39;intérieur d&#39;une ISR.</p>
+</div>
+<h2>Correspondance par périphérique</h2>
+<div class="mq-divider"></div>
+<div class="mq-table-wrap"><table>
+<thead>
+<tr>
+<th>Fonction</th>
+<th>API Arduino</th>
+<th>Driver ESP-IDF</th>
+<th>Registres</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GPIO</td>
+<td><code>digitalWrite()</code></td>
+<td><code>gpio_set_level()</code></td>
+<td><code>GPIO_OUT_W1TS_REG</code></td>
+</tr>
+<tr>
+<td>Interruption GPIO</td>
+<td><code>attachInterrupt()</code></td>
+<td><code>gpio_isr_handler_add()</code></td>
+<td><code>GPIO_PINn_REG</code></td>
+</tr>
+<tr>
+<td>Timer</td>
+<td><code>timerBegin()</code></td>
+<td><code>gptimer_new_timer()</code></td>
+<td><code>TIMGn_TxCONFIG_REG</code></td>
+</tr>
+<tr>
+<td>ADC</td>
+<td><code>analogRead()</code></td>
+<td><code>adc_continuous_*</code></td>
+<td><code>APB_SARADC_*</code></td>
+</tr>
+<tr>
+<td>DMA</td>
+<td>—</td>
+<td>implicite dans le driver</td>
+<td><code>GDMA_*</code></td>
+</tr>
+<tr>
+<td>Sortie analogique</td>
+<td><code>ledcWrite()</code></td>
+<td><code>i2s_*</code></td>
+<td>—</td>
+</tr>
+</tbody></table>
+</div><h2>Rappels de C bas niveau</h2>
+<div class="mq-divider"></div>
+<p>Dès que l&#39;on descend au niveau des registres, on manipule des bits.</p>
+<div class="mq-table-wrap"><table>
+<thead>
+<tr>
+<th>Opération</th>
+<th>Idiome</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Activer un bit</td>
+<td><code>REG |= (1UL &lt;&lt; n);</code></td>
+</tr>
+<tr>
+<td>Effacer un bit</td>
+<td><code>REG &amp;= ~(1UL &lt;&lt; n);</code></td>
+</tr>
+<tr>
+<td>Tester un bit</td>
+<td><code>if (REG &amp; (1UL &lt;&lt; n)) { ... }</code></td>
+</tr>
+</tbody></table>
+</div><p>Le <code>\|=</code> est essentiel : il permet de modifier un bit <strong>sans écraser</strong> les autres bits du registre, qui configurent souvent d&#39;autres fonctions du même périphérique.</p>
+<p>Trois mots-clés reviennent en permanence :</p>
+<ul>
+<li><strong><code>volatile</code></strong> — indique au compilateur que la variable peut être modifiée en dehors du flot normal du programme (par une ISR, ou par le matériel). Sans lui, le compilateur peut remplacer une lecture par une valeur mise en cache, et le programme ne verra jamais le changement. Toute variable partagée entre une ISR et le <code>loop()</code> doit être <code>volatile</code>.</li>
+<li><strong><code>IRAM_ATTR</code></strong> — force le placement d&#39;une fonction en RAM interne plutôt qu&#39;en flash. Indispensable pour une ISR, car la flash peut être temporairement inaccessible au moment où l&#39;interruption survient.</li>
+<li><strong>Les types de taille fixe</strong> (<code>uint8_t</code>, <code>uint16_t</code>, <code>uint32_t</code>) — en embarqué on choisit explicitement la taille de ses variables. Un tampon de 4096 échantillons occupe 8 Ko en <code>uint16_t</code> contre 16 Ko en <code>int</code> : sur 512 Ko de SRAM, cela compte.</li>
+</ul>
+
+<div class="mq-callout warn"><p><strong>Piège classique du 16 bits.</strong> Le produit de deux <code>uint16_t</code> ne tient pas dans un <code>uint16_t</code>. Lors d&#39;un filtrage, il faut accumuler la convolution dans un <code>int32_t</code>, puis reconvertir en 16 bits par décalage.</p>
+</div>
+
+<div class="mq-callout ok"><p><strong>Règle du module.</strong> Écrire au niveau le plus haut qui satisfait la contrainte, et ne descendre que lorsqu&#39;une <strong>mesure</strong> — pas une intuition — démontre que c&#39;est nécessaire.</p>
+</div>
+
+<div class="mq-actions"><p><a href="arduino.html" class="mq-btn primary">Arduino-ESP32</a><br><a href="esp-idf.html" class="mq-btn secondary">ESP-IDF</a></p>
+</div>
+      <!-- bottom previous/next navigation -->
+      <nav class="mq-page-nav" aria-label="Page navigation"><a class="mq-page-nav-link mq-page-nav-prev" href="peripherals/boot-button.html" aria-label="Previous page: Bouton BOOT"><span class="mq-page-nav-kicker">Previous</span><span class="mq-page-nav-title">↩ Bouton BOOT</span></a><a class="mq-page-nav-link mq-page-nav-next" href="frameworks/arduino.html" aria-label="Next page: Arduino-ESP32"><span class="mq-page-nav-kicker">Next</span><span class="mq-page-nav-title">Arduino-ESP32 ↪</span></a></nav>
+    </main>
+    <!-- Sidebar summary (optional) -->
+    <aside class="mq-page-summary-slot" id="mq-page-summary-slot" hidden aria-label="Page summary"></aside>
+
+  </div>
+  
+  <!-- Footer -->
+  <footer class="mq-footer">
+    <!-- Remove if you wish, keeping it brings visibility to Marque :) -->
+    <span class="mq-footer-built">Built with <a href="https://getmarque.pages.dev">Marque</a></span>
+    
+    <!-- Repo button (Optional) -->
+    <span class="mq-footer-repo">  
+      <a class="mq-footer-repo-link" href="https://github.com/Loxed" aria-label="Open repository">
+        <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" stroke-width="1.5"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000"><path d="M16 22.0268V19.1568C16.0375 18.68 15.9731 18.2006 15.811 17.7506C15.6489 17.3006 15.3929 16.8902 15.06 16.5468C18.2 16.1968 21.5 15.0068 21.5 9.54679C21.4997 8.15062 20.9627 6.80799 20 5.79679C20.4558 4.5753 20.4236 3.22514 19.91 2.02679C19.91 2.02679 18.73 1.67679 16 3.50679C13.708 2.88561 11.292 2.88561 8.99999 3.50679C6.26999 1.67679 5.08999 2.02679 5.08999 2.02679C4.57636 3.22514 4.54413 4.5753 4.99999 5.79679C4.03011 6.81549 3.49251 8.17026 3.49999 9.57679C3.49999 14.9968 6.79998 16.1868 9.93998 16.5768C9.61098 16.9168 9.35725 17.3222 9.19529 17.7667C9.03334 18.2112 8.96679 18.6849 8.99999 19.1568V22.0268" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 20.0267C6 20.9999 3.5 20.0267 2 17.0267" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </a>
+    </span>
+</footer>
+
+  <script src="index.js"></script>
+</body>
+</html>

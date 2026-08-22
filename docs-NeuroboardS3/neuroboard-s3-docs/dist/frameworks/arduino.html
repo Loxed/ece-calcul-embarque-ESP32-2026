@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NeuroBoard S3 — Arduino-ESP32</title>
+
+<meta name="description" content="Carte de développement ESP32-S3 — documentation du module TS, ECE">
+
+<!-- 16x16 and 32x32 PNG favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png">
+
+<!-- Web manifest for PWA support -->
+<link rel="manifest" href="../favicon/site.webmanifest">
+
+<!-- Fallback for .ico (optional) -->
+<link rel="icon" href="../favicon/favicon.ico">
+
+<!-- Stylesheets -->
+<link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="../layout-sidebar.css">
+<link rel="stylesheet" id="mq-theme-stylesheet" href="../theme-rustique.css">
+<script>
+window.__mqThemeConfig = {"canSwitch":true,"defaultTheme":"rustique","pageTheme":"rustique","pageThemeHref":"../theme-rustique.css","storageKey":"mq:theme:neuroboard-s3","themes":{"rustique":{"href":"../theme-rustique.css","label":"Rustique"},"comte":{"href":"../theme-comte.css","label":"Comte"},"elmental":{"href":"../theme-elmental.css","label":"Elmental"},"gouda":{"href":"../theme-gouda.css","label":"Gouda"},"pycorino":{"href":"../theme-pycorino.css","label":"Pycorino"},"rubyola":{"href":"../theme-rubyola.css","label":"Rubyola"},"legacy/mida":{"href":"../theme-legacy-mida.css","label":"Legacy: Mida"}}};
+(function () {
+  var config = window.__mqThemeConfig;
+  if (!config || !config.canSwitch || !config.themes) return;
+
+  var selected = config.pageTheme || config.defaultTheme;
+  try {
+    var stored = window.localStorage && window.localStorage.getItem(config.storageKey);
+    if (stored && config.themes[stored]) selected = stored;
+  } catch (_) {}
+
+  var theme = config.themes[selected];
+  var link = document.getElementById('mq-theme-stylesheet');
+  if (!theme || !theme.href || !link) return;
+
+  link.href = theme.href;
+  link.setAttribute('data-theme-name', selected);
+  document.documentElement.setAttribute('data-mq-theme', selected);
+}());
+</script>
+</head>
+
+<body>
+  <!-- Header -->
+  <nav class="mq-nav">
+  <div class="mq-nav-head">
+    <a class="mq-nav-brand" href="../">NeuroBoard S3</a>
+    <button class="mq-search-toggle" type="button" aria-expanded="false" aria-controls="mq-search" aria-label="Open search" onclick="mqToggleSearch(this)">
+      <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M17 17L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+      <span class="mq-search-toggle-label">Search</span>
+      <span class="mq-search-toggle-shortcut" data-search-shortcut aria-hidden="true" hidden></span>
+    </button>
+    <details class="mq-theme-switcher" data-theme-switcher>
+      <summary class="mq-theme-toggle" aria-label="Change theme">
+        <span class="mq-theme-toggle-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg>
+</span>
+        <span class="mq-theme-toggle-label">Theme</span>
+        <span class="mq-theme-toggle-value" data-theme-current>Rustique</span>
+      </summary>
+      <div class="mq-theme-menu">
+        <label class="mq-theme-field">
+          <span class="mq-theme-field-label">Change Theme</span>
+          <select class="mq-theme-select" data-theme-select aria-label="Choose theme">
+            <option value="rustique" selected>Rustique (Default)</option><option value="comte">Comte</option><option value="elmental">Elmental</option><option value="gouda">Gouda</option><option value="pycorino">Pycorino</option><option value="rubyola">Rubyola</option><option value="legacy/mida">Legacy: Mida</option>
+          </select>
+        </label>
+      </div>
+    </details>
+  </div>
+  <div class="mq-nav-links">
+    <a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../"><span class="mq-nav-num">1.</span>NeuroBoard S3</a><a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../getting-started.html"><span class="mq-nav-num">2.</span>Prise en main</a>
+<div class="mq-nav-heading">Matériel</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../hardware.html"><span class="mq-nav-num">3.</span>Vue d&#39;ensemble</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/pinout.html"><span class="mq-nav-num">3.1</span>Brochage</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../hardware/constraints.html"><span class="mq-nav-num">3.2</span>Contraintes des broches</a></div></div>
+<div class="mq-nav-heading">Périphériques</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../peripherals.html"><span class="mq-nav-num">4.</span>Périphériques</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/camera.html"><span class="mq-nav-num">4.1</span>Caméra</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/rgb-led.html"><span class="mq-nav-num">4.2</span>LED RGB</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/microsd.html"><span class="mq-nav-num">4.3</span>Carte microSD</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../peripherals/boot-button.html"><span class="mq-nav-num">4.4</span>Bouton BOOT</a></div></div>
+<div class="mq-nav-heading">Développement</div>
+<div class="mq-nav-group mq-nav-summary-group active"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../frameworks.html"><span class="mq-nav-num">5.</span>Frameworks</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link active" style="--mq-nav-level:1;" href="arduino.html"><span class="mq-nav-num">5.1</span>Arduino-ESP32</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="esp-idf.html"><span class="mq-nav-num">5.2</span>ESP-IDF</a></div></div>
+<div class="mq-nav-heading">Exemples</div>
+<div class="mq-nav-group mq-nav-summary-group"><a class="mq-nav-group-trigger mq-nav-group-trigger-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../examples.html"><span class="mq-nav-num">6.</span>Exemples</a><div class="mq-nav-submenu"><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/adc-dma.html"><span class="mq-nav-num">6.1</span>Acquisition ADC + DMA</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/buffering.html"><span class="mq-nav-num">6.2</span>Tampons et blocs</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/fir.html"><span class="mq-nav-num">6.3</span>Filtrage FIR</a><a class="mq-nav-link mq-nav-level-1 mq-nav-numbered-link" style="--mq-nav-level:1;" href="../examples/mfcc.html"><span class="mq-nav-num">6.4</span>MFCC</a></div></div>
+<div class="mq-nav-heading">Référence</div>
+<a class="mq-nav-link mq-nav-level-0 mq-nav-numbered-link" style="--mq-nav-level:0;" href="../resources.html"><span class="mq-nav-num">7.</span>Ressources</a>
+  </div>
+  <div class="mq-nav-actions">
+    <button class="mq-nav-toggle" type="button" aria-expanded="false" aria-label="Toggle navigation" onclick="mqToggleNav(this)">☰</button>
+  </div>
+</nav>
+
+
+  <!-- Search Container -->
+  <div class="mq-search" id="mq-search" hidden aria-hidden="true">
+  <button class="mq-search-backdrop" type="button" aria-label="Close search" onclick="mqCloseSearch()"></button>
+  <section class="mq-search-panel" role="dialog" aria-modal="true" aria-labelledby="mq-search-title">
+    <div class="mq-search-head">
+      <svg class="mq-search-panel-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.5-3.5"></path>
+      </svg>
+      <label class="mq-search-input-wrap" for="mq-search-input">
+        <span class="mq-search-label" id="mq-search-title">Search this site</span>
+        <input id="mq-search-input" class="mq-search-input" type="search" placeholder="Search pages, headings, and content" autocomplete="off" spellcheck="false">
+      </label>
+      <button class="mq-search-close" type="button" aria-label="Close search" onclick="mqCloseSearch()">
+        <svg class="mq-search-close-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+        <span class="mq-search-close-label">Close</span>
+        <span class="mq-search-close-hint" data-search-close-hint aria-hidden="true" hidden></span>
+      </button>
+    </div>
+    <p class="mq-search-meta" id="mq-search-meta">Type to search titles, headings, and page content.</p>
+    <div class="mq-search-results" id="mq-search-results">
+      <div class="mq-search-empty">Search is ready. Try a page title, a section heading, or a phrase from the content.</div>
+    </div>
+  </section>
+</div>
+
+
+  <!-- Main Content -->
+  <div class="mq-page-shell" id="mq-page-shell" data-page-summary="true" style="--page-margin-left: auto; --page-margin-right: auto;">
+    <main class="mq-main">
+      <!-- dynamic mq content -->
+      <h1>Arduino-ESP32</h1>
+<div class="mq-divider"></div>
+<p>Le cœur Arduino pour ESP32 est une surcouche au-dessus d&#39;ESP-IDF. Sous PlatformIO il s&#39;active avec <code>framework = arduino</code> — voir <a href="getting-started.html">Prise en main</a>.</p>
+
+<div class="mq-callout warn"><p>La version du cœur compte. PlatformIO officiel reste sur Arduino-ESP32 <strong>2.x</strong>, où l&#39;API timer et plusieurs API ADC diffèrent. Les exemples de ce site supposent le cœur <strong>3.x</strong> fourni par pioarduino.</p>
+</div>
+<h2>GPIO</h2>
+<div class="mq-divider"></div>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c">pinMode(<span class="hljs-number">21</span>, OUTPUT);
+digitalWrite(<span class="hljs-number">21</span>, HIGH);
+
+pinMode(<span class="hljs-number">0</span>, INPUT_PULLUP);
+<span class="hljs-type">int</span> etat = digitalRead(<span class="hljs-number">0</span>);</code></pre></div><h2>Interruptions GPIO</h2>
+<div class="mq-divider"></div>
+<p>Sur ESP32-S3, <strong>toutes les broches d&#39;entrée peuvent déclencher une interruption</strong>, et <code>attachInterrupt()</code> fonctionne sur chacune d&#39;elles. La contrainte de l&#39;Arduino UNO, où seules deux broches étaient utilisables, disparaît.</p>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-keyword">volatile</span> <span class="hljs-type">uint32_t</span> compteur = <span class="hljs-number">0</span>;
+
+<span class="hljs-type">void</span> IRAM_ATTR <span class="hljs-title function_">isr</span><span class="hljs-params">()</span> {
+    compteur++;
+}
+
+<span class="hljs-type">void</span> <span class="hljs-title function_">setup</span><span class="hljs-params">()</span> {
+    pinMode(<span class="hljs-number">21</span>, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(<span class="hljs-number">21</span>), isr, FALLING);
+}</code></pre></div>
+<div class="mq-callout info"><p>Ce que l&#39;API ne montre pas, c&#39;est ce qu&#39;elle fait pour vous. Sous <code>attachInterrupt()</code> se trouve le driver GPIO d&#39;ESP-IDF, qui installe un service d&#39;interruption partagé, y enregistre un handler par broche et configure le type de front. Descendre au niveau ESP-IDF permet de choisir le cœur qui sert l&#39;interruption, sa priorité, et de placer l&#39;ISR en IRAM.</p>
+</div>
+<h2>Timer</h2>
+<div class="mq-divider"></div>
+<p>Un timer matériel possède son propre compteur qui évolue automatiquement, indépendamment du CPU. C&#39;est la seule façon d&#39;obtenir une fréquence d&#39;échantillonnage stable — une temporisation gérée avec <code>millis()</code> dans une boucle de <em>polling</em> dérive et fluctue.</p>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-type">hw_timer_t</span> *timer = <span class="hljs-literal">NULL</span>;
+<span class="hljs-keyword">volatile</span> <span class="hljs-type">uint32_t</span> ticks = <span class="hljs-number">0</span>;
+
+<span class="hljs-type">void</span> IRAM_ATTR <span class="hljs-title function_">onTimer</span><span class="hljs-params">()</span> {
+    ticks++;
+}
+
+<span class="hljs-type">void</span> <span class="hljs-title function_">setup</span><span class="hljs-params">()</span> {
+    timer = timerBegin(<span class="hljs-number">1000000</span>);                  <span class="hljs-comment">// 1 MHz → 1 tick = 1 µs</span>
+    timerAttachInterrupt(timer, &amp;onTimer);
+    timerAlarm(timer, <span class="hljs-number">1000</span>, <span class="hljs-literal">true</span>, <span class="hljs-number">0</span>);             <span class="hljs-comment">// 1000 µs = 1 kHz, auto-reload</span>
+}</code></pre></div>
+<div class="mq-callout warn"><p>Cette signature (<code>timerBegin(frequence)</code>) est celle du cœur <strong>3.x</strong>. En 2.x elle prenait trois arguments (<code>timerBegin(num, diviseur, montant)</code>). Les exemples trouvés en ligne mélangent les deux — vérifiez toujours la version visée.</p>
+</div>
+
+<div class="mq-callout ok"><p><strong>Méthode de validation.</strong> Pour vérifier qu&#39;un timer tourne à la bonne fréquence, faites basculer une broche dans l&#39;ISR et observez-la à l&#39;oscilloscope : la période mesurée doit valoir le double de la période d&#39;alarme.</p>
+</div>
+<h2>analogRead() et ses limites</h2>
+<div class="mq-divider"></div>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-type">int</span> brut = analogRead(<span class="hljs-number">1</span>);              <span class="hljs-comment">// 0-4095 sur GPIO1 (ADC1_CH0)</span>
+analogSetPinAttenuation(<span class="hljs-number">1</span>, ADC_11db);  <span class="hljs-comment">// plage étendue</span></code></pre></div>
+<div class="mq-callout danger"><p><code>analogRead()</code> est <strong>bloquant</strong> et surtout <strong>imprécis en cadence</strong> : l&#39;instant réel de chaque échantillon dépend de la durée du reste de la boucle, de l&#39;ordonnanceur FreeRTOS et des interruptions de la pile Wi-Fi. Le résultat n&#39;est pas une fréquence d&#39;échantillonnage, mais une suite d&#39;instants irréguliers.</p>
+<p>Or tout le traitement du signal repose sur l&#39;hypothèse d&#39;échantillons <strong>régulièrement espacés</strong>. Une FFT calculée sur des données acquises par <code>analogRead()</code> en boucle donne des résultats faux, d&#39;autant plus que la fréquence visée est élevée.</p>
+</div>
+<p>Pour du prototypage ou la lecture d&#39;un potentiomètre, <code>analogRead()</code> reste parfaitement adapté. Pour du traitement du signal, passez à <a href="adc-dma.html">l&#39;acquisition ADC + DMA</a>.</p>
+<h2>Appeler ESP-IDF depuis un croquis</h2>
+<div class="mq-divider"></div>
+<p>Arduino-ESP32 étant construit sur ESP-IDF, il suffit d&#39;inclure l&#39;en-tête voulu :</p>
+<div class="mq-code-block" data-lang="c"><div class="mq-code-head"><span class="mq-code-lang">c</span><button class="mq-code-copy" type="button" aria-label="Copy c code">Copy</button></div><pre><code class="hljs language-c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;Arduino.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;driver/gptimer.h&quot;</span>        <span class="hljs-comment">// driver ESP-IDF</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;esp_adc/adc_continuous.h&quot;</span></span>
+
+<span class="hljs-type">void</span> <span class="hljs-title function_">setup</span><span class="hljs-params">()</span> {
+    Serial.begin(<span class="hljs-number">115200</span>);          <span class="hljs-comment">// confort Arduino</span>
+    <span class="hljs-comment">// ... configuration au niveau driver ESP-IDF</span>
+}</code></pre></div>
+<div class="mq-callout ok"><p>C&#39;est le mode de travail recommandé pour le module : Arduino pour l&#39;initialisation et le débogage, ESP-IDF pour les périphériques critiques.</p>
+</div>
+      <!-- bottom previous/next navigation -->
+      <nav class="mq-page-nav" aria-label="Page navigation"><a class="mq-page-nav-link mq-page-nav-prev" href="../frameworks.html" aria-label="Previous page: Frameworks"><span class="mq-page-nav-kicker">Previous</span><span class="mq-page-nav-title">↩ Frameworks</span></a><a class="mq-page-nav-link mq-page-nav-next" href="esp-idf.html" aria-label="Next page: ESP-IDF"><span class="mq-page-nav-kicker">Next</span><span class="mq-page-nav-title">ESP-IDF ↪</span></a></nav>
+    </main>
+    <!-- Sidebar summary (optional) -->
+    <aside class="mq-page-summary-slot" id="mq-page-summary-slot" hidden aria-label="Page summary"></aside>
+
+  </div>
+  
+  <!-- Footer -->
+  <footer class="mq-footer">
+    <!-- Remove if you wish, keeping it brings visibility to Marque :) -->
+    <span class="mq-footer-built">Built with <a href="https://getmarque.pages.dev">Marque</a></span>
+    
+    <!-- Repo button (Optional) -->
+    <span class="mq-footer-repo">  
+      <a class="mq-footer-repo-link" href="https://github.com/Loxed" aria-label="Open repository">
+        <?xml version="1.0" encoding="UTF-8"?><svg width="16px" height="16px" stroke-width="1.5"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000"><path d="M16 22.0268V19.1568C16.0375 18.68 15.9731 18.2006 15.811 17.7506C15.6489 17.3006 15.3929 16.8902 15.06 16.5468C18.2 16.1968 21.5 15.0068 21.5 9.54679C21.4997 8.15062 20.9627 6.80799 20 5.79679C20.4558 4.5753 20.4236 3.22514 19.91 2.02679C19.91 2.02679 18.73 1.67679 16 3.50679C13.708 2.88561 11.292 2.88561 8.99999 3.50679C6.26999 1.67679 5.08999 2.02679 5.08999 2.02679C4.57636 3.22514 4.54413 4.5753 4.99999 5.79679C4.03011 6.81549 3.49251 8.17026 3.49999 9.57679C3.49999 14.9968 6.79998 16.1868 9.93998 16.5768C9.61098 16.9168 9.35725 17.3222 9.19529 17.7667C9.03334 18.2112 8.96679 18.6849 8.99999 19.1568V22.0268" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 20.0267C6 20.9999 3.5 20.0267 2 17.0267" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </a>
+    </span>
+</footer>
+
+  <script src="../index.js"></script>
+</body>
+</html>

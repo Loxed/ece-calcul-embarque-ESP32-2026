@@ -1,0 +1,90 @@
++++
+title = Ressources
+nav = resources
+summary = false
++++
+
+# Ressources
+@divider
+
+Documentation et références pour la NeuroBoard-S3.
+
+Version 1.0 de la documentation, rédigée par [Léopold Rombaut](https://github.com/Loxed).
+
+Trois documents de référence structurent tout le travail sur cette carte.
+
+@row ref1
+
+  @link-card .primary examples/mfcc.mq
+    ##* CLI Commands
+    @divider
+    Reference every Marque command in one place.
+  @end link-card
+
+  @link-card .primary (https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf)
+    ## Datasheet ESP32-S3
+    @divider
+    Caractéristiques physiques du composant et rôle de ses broches. (PDF)
+  @end link-card
+
+  @link-card .secondary https://documentation.espressif.com/esp32-s3_technical_reference_manual_en.pdf
+    ## Technical Reference Manual
+    @divider
+    Architecture interne des périphériques et leurs registres. (PDF)
+  @end link-card
+
+  @link-card .tertiary https://docs.espressif.com/projects/arduino-esp32/en/latest/getting_started.html
+    ## Documentation Arduino-ESP32
+    @divider
+    Fonctions logicielles et drivers permettant de configurer les périphériques.
+  @end link-card
+@end row ref1
+
+@row ref2
+
+  @link-card https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf
+    ## Datasheet du module WROOM-1
+    @divider
+    Niveau module, couvrant la variante N16R8 de cette carte. (PDF)
+  @end link-card
+@end row ref2
+
+## API par périphérique
+@divider
+
+| Périphérique | Arduino-ESP32 | ESP-IDF |
+| --- | --- | --- |
+| Timer | [Timer API](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/timer.html) | [GPTimer](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/gptimer.html) |
+| ADC | [ADC API](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html) | [ADC Continuous Mode](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/adc/adc_continuous.html) |
+| GPIO | [GPIO API](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/gpio.html) | [GPIO](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/gpio.html) |
+
+## Composants
+@divider
+
+@row comp
+  @link-card https://github.com/espressif/esp32-camera
+    ## esp32-camera
+    @divider
+    Pilote DVP pour OV3660 et OV2640.
+  @end link-card
+
+  @link-card .secondary https://github.com/espressif/esp-dsp
+    ## esp-dsp
+    @divider
+    FFT, FIR, fenêtrage, optimisés pour le LX7.
+  @end link-card
+@end row comp
+
+@row comp2
+  @link-card .tertiary https://github.com/pioarduino/platform-espressif32
+    ## pioarduino
+    @divider
+    Fork communautaire maintenant le support Arduino 3.x sous PlatformIO.
+  @end link-card
+
+  @link-card https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/index.html
+    ## ESP-IDF Programming Guide
+    @divider
+    Documentation complète du SDK natif pour la cible ESP32-S3.
+  @end link-card
+@end row comp2

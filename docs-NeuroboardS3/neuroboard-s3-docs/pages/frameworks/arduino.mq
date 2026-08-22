@@ -1,0 +1,111 @@
++++
+title = Arduino-ESP32
+nav = arduino
+summary = true
++++
+
+# Arduino-ESP32
+@divider
+
+Le cœur Arduino pour ESP32 est une surcouche au-dessus d'ESP-IDF. Sous PlatformIO il s'active avec `framework = arduino` — voir [Prise en main](getting-started.mq).
+
+@callout .warn
+La version du cœur compte. PlatformIO officiel reste sur Arduino-ESP32 **2.x**, où l'API timer et plusieurs API ADC diffèrent. Les exemples de ce site supposent le cœur **3.x** fourni par pioarduino.
+@end callout
+
+## GPIO
+@divider
+
+```c
+pinMode(21, OUTPUT);
+digitalWrite(21, HIGH);
+
+pinMode(0, INPUT_PULLUP);
+int etat = digitalRead(0);
+```
+
+## Interruptions GPIO
+@divider
+
+Sur ESP32-S3, **toutes les broches d'entrée peuvent déclencher une interruption**, et `attachInterrupt()` fonctionne sur chacune d'elles. La contrainte de l'Arduino UNO, où seules deux broches étaient utilisables, disparaît.
+
+```c
+volatile uint32_t compteur = 0;
+
+void IRAM_ATTR isr() {
+    compteur++;
+}
+
+void setup() {
+    pinMode(21, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(21), isr, FALLING);
+}
+```
+
+@callout .info
+Ce que l'API ne montre pas, c'est ce qu'elle fait pour vous. Sous `attachInterrupt()` se trouve le driver GPIO d'ESP-IDF, qui installe un service d'interruption partagé, y enregistre un handler par broche et configure le type de front. Descendre au niveau ESP-IDF permet de choisir le cœur qui sert l'interruption, sa priorité, et de placer l'ISR en IRAM.
+@end callout
+
+## Timer
+@divider
+
+Un timer matériel possède son propre compteur qui évolue automatiquement, indépendamment du CPU. C'est la seule façon d'obtenir une fréquence d'échantillonnage stable — une temporisation gérée avec `millis()` dans une boucle de *polling* dérive et fluctue.
+
+```c
+hw_timer_t *timer = NULL;
+volatile uint32_t ticks = 0;
+
+void IRAM_ATTR onTimer() {
+    ticks++;
+}
+
+void setup() {
+    timer = timerBegin(1000000);                  // 1 MHz → 1 tick = 1 µs
+    timerAttachInterrupt(timer, &onTimer);
+    timerAlarm(timer, 1000, true, 0);             // 1000 µs = 1 kHz, auto-reload
+}
+```
+
+@callout .warn
+Cette signature (`timerBegin(frequence)`) est celle du cœur **3.x**. En 2.x elle prenait trois arguments (`timerBegin(num, diviseur, montant)`). Les exemples trouvés en ligne mélangent les deux — vérifiez toujours la version visée.
+@end callout
+
+@callout .ok
+**Méthode de validation.** Pour vérifier qu'un timer tourne à la bonne fréquence, faites basculer une broche dans l'ISR et observez-la à l'oscilloscope : la période mesurée doit valoir le double de la période d'alarme.
+@end callout
+
+## analogRead() et ses limites
+@divider
+
+```c
+int brut = analogRead(1);              // 0-4095 sur GPIO1 (ADC1_CH0)
+analogSetPinAttenuation(1, ADC_11db);  // plage étendue
+```
+
+@callout .danger
+`analogRead()` est **bloquant** et surtout **imprécis en cadence** : l'instant réel de chaque échantillon dépend de la durée du reste de la boucle, de l'ordonnanceur FreeRTOS et des interruptions de la pile Wi-Fi. Le résultat n'est pas une fréquence d'échantillonnage, mais une suite d'instants irréguliers.
+
+Or tout le traitement du signal repose sur l'hypothèse d'échantillons **régulièrement espacés**. Une FFT calculée sur des données acquises par `analogRead()` en boucle donne des résultats faux, d'autant plus que la fréquence visée est élevée.
+@end callout
+
+Pour du prototypage ou la lecture d'un potentiomètre, `analogRead()` reste parfaitement adapté. Pour du traitement du signal, passez à [l'acquisition ADC + DMA](adc-dma.mq).
+
+## Appeler ESP-IDF depuis un croquis
+@divider
+
+Arduino-ESP32 étant construit sur ESP-IDF, il suffit d'inclure l'en-tête voulu :
+
+```c
+#include <Arduino.h>
+#include "driver/gptimer.h"        // driver ESP-IDF
+#include "esp_adc/adc_continuous.h"
+
+void setup() {
+    Serial.begin(115200);          // confort Arduino
+    // ... configuration au niveau driver ESP-IDF
+}
+```
+
+@callout .ok
+C'est le mode de travail recommandé pour le module : Arduino pour l'initialisation et le débogage, ESP-IDF pour les périphériques critiques.
+@end callout

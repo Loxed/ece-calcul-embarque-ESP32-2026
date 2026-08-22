@@ -1,0 +1,100 @@
++++
+title = Vue d'ensemble
+nav = hardware
+summary = true
++++
+
+# Vue d'ensemble du matériel
+@divider
+
+## Description des composants
+@divider
+
+![Face avant annotée de la NeuroBoard-S3](static/images/neuroboard-s3-face-avant-annotee.png)
+
+| Composant | Description |
+| --- | --- |
+| **ESP32-S3-WROOM-1-N16R8** | Module MCU Wi-Fi + Bluetooth Low Energy, double cœur Xtensa LX7 jusqu'à 240 MHz. Embarque 16 Mo de flash Quad SPI, 8 Mo de PSRAM Octal SPI, et une antenne PCB. |
+| **Régulateur LDO 5 V → 3,3 V** | Convertit le 5 V en 3,3 V, calibré à 1 A. Plage d'entrée : 4,45 V à 5,5 V. |
+| **Connecteurs** | Deux barrettes de 22 broches (J1 et J3), pas de 2,54 mm. Voir [Brochage](pinout.mq). |
+| **Port USB** | Alimentation, flashage et communication via le périphérique natif USB Serial/JTAG (GPIO19/GPIO20). |
+| **Bouton BOOT** | Maintenir **BOOT** puis appuyer sur **RST** active le mode Firmware Download. Réutilisable comme entrée. Voir [Bouton BOOT](boot-button.mq). |
+| **Bouton RST** | Redémarre le système. |
+| **Connecteur FPC caméra** | Interface DVP parallèle 8 bits, conçue pour l'OV3660. Voir [Caméra](camera.mq). |
+| **Interface microSD** | Interface hôte SD en mode 1 bit sur GPIO39/40/41. |
+| **LED RGB** | LED adressable pilotée par **GPIO38**. |
+
+@callout .danger
+Le module N16R8 embarque de la **PSRAM Octal SPI**. Les broches GPIO35, GPIO36 et GPIO37 servent à la communication interne entre l'ESP32-S3 et la PSRAM : elles **ne sont pas disponibles** et apparaissent en **NC** sur le connecteur J3.
+@end callout
+
+@callout .info
+La sérigraphie marque les broches partagées avec les périphériques embarqués : `*` pour la caméra, `~` pour la microSD et la LED RGB. Une broche marquée reste utilisable en E/S généraliste tant que le périphérique correspondant n'est pas en service.
+@end callout
+
+## Mémoire
+@divider
+
+@row mem
+  @stat
+  ## 16 Mo
+  Flash Quad SPI
+  @end stat
+
+  @stat
+  ## 8 Mo
+  PSRAM Octal SPI
+  @end stat
+
+  @stat
+  ## 512 Ko
+  SRAM interne
+  @end stat
+@end row mem
+
+@callout .warn
+Ne confondez pas **PSRAM** et **SRAM**. Les 8 Mo de PSRAM sont une mémoire externe au die, accessible via un cache : rapide, mais pas au niveau de la SRAM interne. Un tampon d'acquisition en temps réel gagne à rester en SRAM ; un frame buffer caméra doit aller en PSRAM. Voir [Tampons et blocs](buffering.mq).
+@end callout
+
+## Schéma bloc
+@divider
+
+![Schéma bloc de la NeuroBoard-S3](static/images/neuroboard-s3-schema-bloc.png)
+
+## Options d'alimentation
+@divider
+
+Trois façons **mutuellement exclusives** d'alimenter la carte :
+
+@row alim
+  @card .primary
+    ## Port USB
+    @divider
+    Alimentation par défaut, recommandée.
+  @end card
+
+  @card
+    ## VIN + G
+    @divider
+    4,45 V à 5,5 V, régulés sur carte vers 3,3 V.
+  @end card
+
+  @card .secondary
+    ## 3V3 + G
+    @divider
+    3,3 V régulés injectés directement, en contournant le LDO.
+  @end card
+@end row alim
+
+@callout .warn
+Le rail 3,3 V est fourni par un LDO de **1 A**. Une caméra en pleine résolution avec le Wi-Fi actif appelle un courant de crête important : prévoyez une source capable de délivrer au moins **500 mA sur le rail 5 V**. Une alimentation insuffisante se manifeste par des redémarrages aléatoires pendant la capture, pas par un message d'erreur.
+@end callout
+
+## FreeRTOS
+@divider
+
+Les frameworks utilisables sur cette carte reposent tous sur **FreeRTOS**, qui prend en charge l'ordonnancement des tâches, leur répartition sur les deux cœurs, et les mécanismes de synchronisation.
+
+@callout .info
+Même un croquis Arduino minimal tourne à l'intérieur d'une tâche FreeRTOS. Votre `loop()` n'est pas seule sur la puce : la pile Wi-Fi, le watchdog et l'ordonnanceur tournent aussi. C'est l'une des raisons pour lesquelles une boucle de *polling* ne peut pas garantir une fréquence d'échantillonnage stable.
+@end callout

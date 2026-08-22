@@ -1,0 +1,56 @@
++++
+title = Périphériques
+nav = peripherals
+summary = true
++++
+
+# Périphériques Embarqués
+@divider
+
+
+## Description des composants
+@divider
+
+![NeuroBoard-S3 — face avant](static/images/neuroboard-front-view.png)
+
+*NeuroBoard-S3 — face avant*
+
+Les composants sont décrits dans le sens des aiguilles d'une montre, à partir du module.
+
+| Composant | Description |
+| --- | --- |
+| **ESP32-S3-WROOM-1-N16R8** | Module MCU Wi-Fi + Bluetooth Low Energy doté d'un riche ensemble de périphériques, avec accélération matérielle pour les calculs de réseaux de neurones et le traitement du signal. Cette variante embarque 16 Mo de flash Quad SPI et 8 Mo de PSRAM Octal SPI. |
+| **Wi-Fi / Bluetooth 2.4 GHz Antenna** | Antenne PCB assurant les communications Wi-Fi et Bluetooth Low Energy. |
+| **Camera Interface** | Connecteur FPC pour module OV3660 ou OV2640, relié à l'interface DVP parallèle 8 bits de l'ESP32-S3. |
+| **Pin Headers** | Deux barrettes de 22 broches, au pas de 2,54 mm. Toutes les GPIO disponibles y sont ramenées, à l'exception de celles que le module réserve à la flash et à la PSRAM. |
+| **USB-C Port** | Alimentation de la carte, programmation du microcontrôleur et communication série via l'interface USB Serial/JTAG native de l'ESP32-S3. Utilisé également pour le debug JTAG. |
+| **Boot Button** | Bouton de programmation. Le mode Firmware Download est activé en maintenant **BOOT** puis en appuyant sur **RST**. |
+| **Reset Button** | Réinitialisation du microcontrôleur. |
+| **RGB LED** | LED RGB adressable, reliée à **GPIO38**. |
+| **3.3 V Power LED** | Allumée dès que la carte est alimentée. |
+
+
+
+## Composants spécifiques
+
+@row
+
+@card .primary
+##* Caméra OV3660 / OV2640
+@divider
+Reference every Marque command in one place.
+@end card
+
+@card .primary
+##* LED RGB adressable 
+@divider
+Reference every Marque command in one place.
+@end card
+
+@card .primary
+##* Carte microSD
+@divider
+Reference every Marque command in one place.
+@end card
+
+@end row

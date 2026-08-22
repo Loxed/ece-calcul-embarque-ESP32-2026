@@ -1,3 +1,5 @@
 */tex
 
 *__pycache__/
+
+*.lock
