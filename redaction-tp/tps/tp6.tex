@@ -1,0 +1,81 @@
+% tps/tp6.tex : Compression : pruning et export
+% Notebook associé : edge-ai-toolchain/notebooks/compression/06_pruning.py
+
+\chapter{Compression : pruning et export}
+
+\section*{Motivation}
+
+Une partie des poids d'un réseau entraîné contribue peu au résultat. Le pruning (élagage) les supprime. Ce TP compare deux formes d'élagage sur le MobileNetV2 du TP 4 : poids par poids (non structuré) et canal par canal (structuré), et mesure ce que chacune apporte réellement en taille et en latence. Il combine ensuite pruning et quantification, puis exporte le modèle au format ONNX, première étape du déploiement. \\
+
+\begin{imp}
+Ce TP utilise le notebook \ToolchainLink{notebooks/compression/06_pruning.py}{\texttt{06\_pruning.py}}, qui part du modèle \texttt{models/cifar4\_mobilenetv2.pt} produit au TP 4. Il exporte \texttt{models/cifar4\_mobilenetv2\_pruned50.onnx}, utilisé au TP 7.
+Les valeurs citées dans les encadrés "À retenir" ont été mesurées sur un PC portable (GPU NVIDIA RTX 5060 Laptop, PyTorch 2.11) ; sur une autre machine ou sur CPU, elles varient de quelques dixièmes de point, et les durées dépendent du matériel.
+\end{imp}
+
+\section{Pruning non structuré}
+
+\texttt{torch.nn.utils.prune.global\_unstructured} classe tous les poids de toutes les convolutions et couches denses par valeur absolue et met à zéro la fraction demandée. Les tenseurs gardent leur forme.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.6\linewidth}{!}{\input{diagrams/tp6/pruning_kinds}}
+\caption{Les deux formes de pruning sur une matrice de poids : zéros épars dans un tenseur de même taille, ou canaux entiers retirés.}
+\label{fig:tp6-kinds}
+\end{figure}
+
+\EQ{Relever pour 30, 50, 70 et 90~\% de poids mis à zéro : la précision de test sans réentraînement, puis après 3 epochs de réentraînement. Tracer les deux courbes. Jusqu'à quel taux la précision reste-t-elle proche du modèle d'origine ?}
+
+\EQ{Relever pour chaque taux la taille du fichier de poids, sa taille compressée avec gzip et la latence CPU. Lesquelles de ces trois grandeurs changent ?}
+
+\TQ{Un modèle dont 70~\% des poids valent zéro occupe-t-il moins de mémoire ? S'exécute-t-il plus vite ? Distinguer le stockage dense, le stockage compressé et le stockage creux, et préciser ce que doit savoir faire le moteur d'inférence pour en tirer parti.}
+
+\begin{imp}
+\textbf{À retenir :} le pruning non structuré ne change ni la taille du fichier (9.16~Mo à tous les taux) ni la latence : les zéros sont stockés et multipliés comme les autres poids. Il ne rapporte que si le format de stockage ou le moteur d'inférence exploite les zéros, ce qui est rare sur microcontrôleur.
+\end{imp}
+
+\section{Pruning structuré}
+
+Chaque bloc de MobileNetV2 enchaîne une convolution d'expansion $1 \times 1$, une convolution depthwise $3 \times 3$ et une projection $1 \times 1$. Le pruning structuré supprime des canaux internes entiers : les tenseurs restent denses mais deviennent plus petits. Retirer le canal interne $c$ d'un bloc revient à supprimer le filtre $c$ de l'expansion, le filtre $c$ de la depthwise et la colonne $c$ des poids de projection $W$. \\
+
+\begin{figure}[H]
+\centering
+\resizebox{0.9\linewidth}{!}{\input{diagrams/tp6/inverted_residual}}
+\caption{Bloc résiduel inversé de MobileNetV2 : le pruning structuré retire des canaux internes, sans toucher aux $C$ canaux d'entrée et de sortie.}
+\label{fig:tp6-block}
+\end{figure}
+
+L'importance du canal $c$ se mesure sur 256 images d'apprentissage : c'est l'amplitude moyenne de son activation $a_c$ en sortie de la depthwise, pondérée par les poids de projection qui la lisent,
+\[
+I_c = \overline{|a_c|} \cdot \sum_{o} |W_{o,c}|.
+\]
+Les canaux de plus faible $I_c$ sont retirés. Un canal retiré apportait en moyenne $W_{:,c}\,\overline{a_c}$ à la sortie de la projection ; cette contribution moyenne est soustraite de la moyenne mémorisée par la BatchNorm qui suit, pour que la sortie du bloc reste centrée au même endroit. Sans cette compensation, chaque bloc élagué décale l'entrée du bloc suivant et l'erreur s'accumule le long du réseau. \\
+
+\TQ{Pourquoi le notebook ne supprime-t-il que les canaux internes des blocs, et jamais leurs canaux d'entrée ou de sortie ? (Indice : connexions résiduelles.)}
+
+\EQ{Relever pour un élagage de 25~\% puis de 50~\% des canaux internes, en une passe : nombre de paramètres, précision sans puis avec réentraînement, taille et latence CPU.}
+
+\EQ{Le notebook élague aussi 50~\% des canaux en deux étapes (25~\%, réentraînement, puis un tiers des canaux restants, réentraînement). Comparer la précision à celle de l'élagage en une passe. Pourquoi l'élagage progressif perd-il moins ?}
+
+\begin{imp}
+\textbf{À retenir :} le pruning structuré réduit vraiment taille et latence. Il coûte en précision : 25~\% des canaux internes retirés font passer de 88.5~\% à 83.0~\% après réentraînement ; à 50~\%, l'élagage en une passe tombe à 66.8~\%, l'élagage par étapes garde 79.2~\%. Au-delà d'un taux modéré, élaguer par étapes avec réentraînement, et d'autant plus que le dataset de réentraînement est petit (600 images ici).
+\end{imp}
+
+\section{Pruning et quantification}
+
+\EQ{Compléter le tableau de synthèse du notebook : taille, rapport de compression, précision et latence pour le modèle d'origine et les modèles élagués, en \texttt{float32} et en int8. Quel modèle retenir pour l'ESP32-S3 si la précision ne doit pas perdre plus de 2 points ? S'il doit tenir sous 2~Mo ?}
+
+\begin{imp}
+\textbf{À retenir :} pruning structuré et quantification se cumulent. La quantification seule donne 2.65~Mo pour 86.8~\% ; élagué à 25~\% puis quantifié, le modèle descend à 2.13~Mo (rapport 4.3) pour 84.0~\%. Le choix entre les deux dépend de la contrainte dominante de l'application : mémoire ou précision.
+\end{imp}
+
+\section{Export ONNX}
+
+ONNX est un format d'échange de modèles, indépendant de PyTorch, que lisent les outils de conversion des frameworks embarqués. \\
+
+\EQ{Exporter le modèle élagué à 50~\% par étapes avec \texttt{torch.onnx.export()}. L'exécuter avec \texttt{onnxruntime} sur les 400 images de test et relever l'écart maximal avec les sorties PyTorch et le nombre de classes identiques.}
+
+\TQ{Pourquoi passer par un format intermédiaire comme ONNX plutôt que d'embarquer directement le modèle PyTorch ? Pourquoi l'écart entre PyTorch et onnxruntime n'est-il pas exactement nul ?}
+
+\begin{imp}
+\textbf{À retenir :} vérifier chaque conversion de format en comparant les sorties sur des données réelles. Une conversion qui se termine sans erreur ne garantit pas un modèle qui calcule la même chose.
+\end{imp}

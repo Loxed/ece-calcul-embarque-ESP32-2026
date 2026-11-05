@@ -1,0 +1,16 @@
+% diagrams/tp3/cnn.tex : architecture du CNN du TP 3 ; formes intermédiaires à compléter (question E6)
+\begin{tikzpicture}[
+    font=\sffamily\scriptsize, >=Stealth,
+    t/.style={draw=black!50, fill=black!4, minimum height=1.1cm, minimum width=1.5cm, align=center, inner sep=3pt},
+    op/.style={font=\sffamily\scriptsize, text=ECE!80!black, align=center, text width=2.4cm}
+]
+\node[t] (in) {image\\$1 \times 28 \times 28$};
+\node[t, right=2.8cm of in] (c1) {$? \times ? \times ?$};
+\node[t, right=2.8cm of c1] (c2) {$? \times ? \times ?$};
+\node[t, minimum width=1cm, right=1.6cm of c2] (fl) {$?$};
+\node[t, fill=gamboge!20, draw=gamboge, minimum width=1cm, right=1.6cm of fl] (out) {10\\logits};
+\draw[->, thick] (in) -- node[above=2pt, op] {conv $3 \times 3$, 16 noyaux\\ReLU, pool $2 \times 2$} (c1);
+\draw[->, thick] (c1) -- node[above=2pt, op] {conv $3 \times 3$, 32 noyaux\\ReLU, pool $2 \times 2$} (c2);
+\draw[->, thick] (c2) -- node[above=2pt, op, text width=1.2cm] {Flatten} (fl);
+\draw[->, thick] (fl) -- node[above=2pt, op, text width=1.2cm] {Linear} (out);
+\end{tikzpicture}

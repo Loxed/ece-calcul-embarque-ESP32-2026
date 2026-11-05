@@ -1,2 +1,109 @@
-\chapter{Numérisation rapide sur ESP32}
+% tps/tp1.tex : Acquisition temps réel sur ESP32
+% Prérequis : TP 0 (timers, ADC). Code de départ : tp0/code-snippets/esp32_timer_interrupt.ino
+% Périmètre (échange avec Maxime, août 2026) : acquisition temps réel seulement.
+% Pas de DAC sur l'ESP32-S3 : validation au traceur série. Pas de RIF, pas de DMA.
 
+\chapter{Acquisition temps réel sur ESP32}
+
+\section*{Motivation}
+
+Tout traitement d'un signal échantillonné, filtrage, FFT ou inférence d'un réseau de neurones sur un signal audio, suppose une fréquence d'échantillonnage fixe et connue. Une erreur de 1~\% sur cette fréquence décale de 1~\% toutes les fréquences mesurées ; une gigue (jitter) sur l'instant d'échantillonnage ajoute un bruit. Pour une sinusoïde de fréquence $f$ et une gigue d'écart type $\sigma_t$, le rapport signal sur bruit est borné par $\mathrm{SNR} = -20\log_{10}(2\pi f \sigma_t)$ : une gigue de 1~$\mu$s sur un signal de 1~kHz le limite à 44~dB, soit environ 7 bits effectifs sur les 12 de l'ADC. Ce TP construit une acquisition temps réel sur l'ESP32-S3 : un timer matériel donne l'horloge d'échantillonnage, l'ADC convertit, et le traceur série du PC sert d'instrument de validation. \\
+
+Le TP 0 présente le fonctionnement des timers et de l'ADC. Ce TP en fait la mise en pratique avec le framework Arduino-ESP32, en passant par le driver ESP-IDF GPTimer quand la précision l'exige. Une seule manipulation descend au niveau des registres : la lecture du compteur du timer. \\
+
+\begin{imp}
+Matériel : NeuroBoard-S3, oscilloscope, générateur basse fréquence (GBF), potentiomètre. Le code de départ est \RepoLink{tp0/code-snippets/esp32_timer_interrupt.ino}{\texttt{esp32\_timer\_interrupt.ino}}. Le projet PlatformIO \RepoLink{firmware/platformio.ini}{\texttt{firmware/}} contient la configuration de la carte (pioarduino, Arduino-ESP32 3.x, flash 16~Mo, PSRAM octale) et un environnement par exercice : \texttt{pio run -e tp1\_gptimer -t upload}. Références : chapitre 12 "Timer Group (TIMG)" et chapitre 39 "On-Chip Sensors and Analog Signal Processing" du Technical Reference Manual de l'ESP32-S3 \cite{esp32s3_trm}, documentation Arduino-ESP32 \cite{arduino_timer,arduino_adc} et ESP-IDF GPTimer \cite{esp32s3_gptimer}.
+\end{imp}
+
+\section{Le timer comme horloge d'échantillonnage}
+
+\subsection{Le périphérique Timer Group}
+
+\TQ{À l'aide du chapitre 12 du Technical Reference Manual, donner le nombre de timers génériques de l'ESP32-S3, la taille de leur compteur et de leur prescaler, et les deux sources d'horloge possibles. Quelle durée maximale un compteur peut-il mesurer avec une résolution de 1~$\mu$s avant de déborder ?}
+
+La figure~\ref{fig:tp1-timer} résume le trajet du signal d'horloge jusqu'à l'interruption. \\
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{\input{diagrams/tp1/timer_chain}}
+\caption{Chaîne d'un timer générique de l'ESP32-S3 : le diviseur fixe la résolution, le comparateur déclenche l'alarme.}
+\label{fig:tp1-timer}
+\end{figure}
+
+Le driver GPTimer ne demande pas la valeur du prescaler mais la résolution du compteur (paramètre \texttt{resolution\_hz}) : il calcule lui-même le diviseur à partir de la fréquence de la source d'horloge. La fréquence des alarmes vaut alors
+\[
+f_{alarme} = \frac{\texttt{resolution\_hz}}{\texttt{alarm\_count}}, \qquad \texttt{resolution\_hz} = \frac{f_{source}}{\text{diviseur}}.
+\]
+
+\TQ[tp1:diviseur]{Avec la source APB à 80~MHz et \texttt{resolution\_hz} = 1~MHz, quel diviseur le driver programme-t-il ? Calculer \texttt{alarm\_count} pour des fréquences d'échantillonnage de 8, 16, 32, 44.1 et 48~kHz. Pour chaque fréquence, donner la fréquence réellement obtenue et l'erreur relative.}
+
+\TQ{L'erreur à 44.1~kHz est la plus grande. Proposer un couple (\texttt{resolution\_hz}, \texttt{alarm\_count}) qui la ramène sous 0.01~\%, sachant que le diviseur doit être un entier de 2 à 65536. Quel est l'inconvénient d'une résolution élevée pour les autres usages du timer ?}
+
+\subsection{Validation à l'oscilloscope}
+
+\EQ{Configurer une alarme à 16~kHz avec l'API Arduino : \texttt{timerBegin(1000000)}, \texttt{timerAttachInterrupt()} et \texttt{timerAlarm()}. Dans l'ISR, inverser l'état d'une pin. Quelle relation lie la fréquence du signal carré observé à la fréquence d'échantillonnage ?}
+
+\EQ{Refaire la configuration avec le driver ESP-IDF : \texttt{gptimer\_new\_timer()} (\texttt{resolution\_hz} = 1~MHz), \texttt{gptimer\_set\_alarm\_action()} (\texttt{auto\_reload\_on\_alarm} = \texttt{true}) et une callback qui inverse la pin. Valider au moins trois des fréquences de la question \ref{tp1:diviseur} à l'oscilloscope. Présenter les résultats dans un tableau : fréquence visée, \texttt{alarm\_count}, fréquence calculée, fréquence mesurée.}
+
+\EQ{Remplacer le timer par une boucle \texttt{loop()} qui inverse la pin puis appelle \texttt{delayMicroseconds(31)}. Observer le signal à l'oscilloscope en mode persistance, avec puis sans affichage sur le port série dans la boucle. Estimer la gigue dans les deux cas et la comparer à celle du timer.}
+
+\subsection{Lecture du compteur au niveau registre}
+
+La section 12.2.2 du Technical Reference Manual décrit la lecture du compteur : écrire une valeur quelconque dans \texttt{TIMG\_TxUPDATE\_REG} recopie la valeur courante du compteur dans \texttt{TIMG\_TxLO\_REG} (32 bits de poids faible) et \texttt{TIMG\_TxHI\_REG} (22 bits de poids fort). Le matériel remet \texttt{TIMG\_TxUPDATE\_REG} à zéro quand la copie est terminée. \\
+
+En C, ces registres sont accessibles par la structure \texttt{TIMERG0} (groupe 0) déclarée dans \texttt{soc/\allowbreak timer\_group\_struct.h} d'ESP-IDF : le membre \texttt{hw\_timer[0]} regroupe les registres du timer 0. Les noms exacts des champs se lisent dans ce fichier. Quand le programme ne crée qu'un seul GPTimer, le driver lui attribue en général le timer 0 du groupe 0 ; la comparaison demandée ci-dessous le vérifie. \\
+
+\TQ{Pourquoi le compteur doit-il être recopié dans deux registres avant d'être lu par le CPU ? Que se passerait-il si le CPU lisait directement les deux moitiés d'un compteur qui continue de tourner ?}
+
+\EQ{Créer un seul GPTimer et le démarrer. Écrire une fonction \texttt{read\_timer\_counter()} qui suit la séquence ci-dessus sur \texttt{TIMERG0.hw\_timer[0]}, puis reconstruit la valeur sur 64 bits (\texttt{uint64\_t}). Appeler alternativement \texttt{read\_timer\_counter()} et \texttt{gptimer\_get\_raw\_count()} 10 fois et afficher les deux valeurs : elles doivent croître ensemble, avec un écart de quelques ticks. Si elles divergent, le driver a choisi un autre timer : lequel ? Pourquoi les drivers ESP-IDF sont-ils préférables aux accès registre pour le reste du TP ?}
+
+\begin{imp}
+\textbf{À retenir :} une fréquence d'échantillonnage se fixe par un timer matériel, jamais par une boucle temporisée. Avec une résolution de 1~MHz, seules les fréquences qui divisent 1~MHz sont exactes : 44.1~kHz sort à 43.48~kHz, soit 1.4~\% d'erreur. Calculer l'erreur avant de choisir \texttt{resolution\_hz}.
+\end{imp}
+
+\section{Acquisition avec l'ADC}
+
+\subsection{L'ADC SAR de l'ESP32-S3}
+
+\TQ{À l'aide du chapitre 39 du Technical Reference Manual, donner le nombre d'ADC SAR de l'ESP32-S3 et leur résolution maximale.}
+
+\TQ{Quelle pin de la NeuroBoard-S3 correspond au canal \texttt{ADC\_CHANNEL\_4} de l'ADC1 utilisé dans l'exemple du TP 0 ? D'après la page "Contraintes des broches" de la documentation NeuroBoard, est-elle libre quand la caméra est branchée ? Quelles entrées de l'ADC1 restent libres ? Pourquoi éviter l'ADC2 quand le Wi-Fi est actif ?}
+
+La suite du TP utilise GPIO1 (\texttt{ADC1\_CH0}) comme entrée analogique et GPIO21 comme sortie vers l'oscilloscope : ces deux pins restent libres caméra branchée. \\
+
+\subsection{Acquisition avec \texttt{analogRead()}}
+
+\EQ{Brancher le potentiomètre entre 3.3~V et la masse, curseur sur GPIO1. Afficher la valeur lue par \texttt{analogRead()} sur le traceur série, d'abord en 12 bits, puis en 10 bits avec \texttt{analogReadResolution(10)}. Relever la valeur minimale et maximale et la plage de tension correspondante avec l'atténuation par défaut.}
+
+\EQ{Mesurer avec \texttt{micros()} la durée moyenne d'un appel à \texttt{analogRead()}, sur 10\,000 appels. En déduire la fréquence d'échantillonnage maximale accessible avec cette fonction.}
+
+\EQ{Cadencer l'acquisition par le timer à 8~kHz : l'ISR ne fait que lever un drapeau \texttt{volatile}, et \texttt{loop()} appelle \texttt{analogRead()} quand le drapeau est levé, puis enregistre l'instant de la conversion avec \texttt{esp\_timer\_get\_time()}. Calculer la moyenne et l'écart type de l'intervalle entre deux échantillons sur 1\,000 échantillons. Refaire la mesure à 16 puis à 48~kHz : à partir de quelle fréquence des échantillons sont-ils perdus ?}
+
+\TQ{Pourquoi l'ISR ne doit-elle pas appeler \texttt{analogRead()} ni \texttt{Serial.print()} elle-même ? Que garantit le mot-clé \texttt{volatile} sur le drapeau ?}
+
+\begin{imp}
+\textbf{À retenir :} \texttt{analogRead()} est bloquante : le CPU attend la fin de chaque conversion, et la durée de l'appel fixe la fréquence maximale. Le timer donne l'instant de l'échantillon ; la conversion et tout traitement se font hors de l'ISR. La gigue mesurée entre deux échantillons est le vrai critère de qualité d'une acquisition.
+\end{imp}
+
+\section{Validation au traceur série}
+
+L'ESP32-S3 n'a pas de DAC : le signal acquis ne peut pas être reproduit sur une sortie analogique pour être comparé à l'oscilloscope. La validation se fait sur le PC, avec le traceur série de l'IDE Arduino. \\
+
+\TQ{Pour afficher en temps réel un signal échantillonné à 8~kHz, chaque échantillon est envoyé en texte (4 chiffres et un retour à la ligne). Calculer le débit utile nécessaire en octets par seconde, à 8 puis à 16~kHz. Sur une liaison UART à 115\,200 bauds (10 bits par caractère), ce débit passerait-il ? Sur la NeuroBoard, \texttt{Serial} passe par le périphérique USB natif de l'ESP32-S3 (\texttt{ARDUINO\_USB\_CDC\_ON\_BOOT=1}) : le réglage en bauds y est ignoré. Qu'est-ce qui limite alors le débit ?}
+
+\EQ{Pour découpler l'acquisition de l'envoi, remplir un buffer de 1\,024 échantillons à 8~kHz, puis l'envoyer en entier au traceur série, et recommencer. Combien de temps dure l'acquisition d'un buffer ? L'envoi ? Quelle part du signal est perdue entre deux buffers ?}
+
+\EQ{Acquérir une sinusoïde de 200~Hz, 1~V crête à crête, issue du GBF, avec une composante continue qui la maintient dans la plage de l'ADC. Compter le nombre d'échantillons par période sur le traceur série et en déduire la fréquence mesurée. Comparer à la fréquence du GBF.}
+
+\EQ{À fréquence d'échantillonnage fixée à 8~kHz, augmenter la fréquence du GBF : 1, 3, 4, 5 puis 7~kHz. Relever la fréquence apparente sur le traceur série. Expliquer les valeurs obtenues au-delà de 4~kHz par le théorème de Shannon.}
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{\input{diagrams/tp1/aliasing}}
+\caption{Repliement : échantillonnée à 8~kHz, une sinusoïde de 5~kHz donne les mêmes échantillons qu'une sinusoïde de 3~kHz.}
+\label{fig:tp1-aliasing}
+\end{figure}
+
+\begin{imp}
+\textbf{À retenir :} sans DAC, le traceur série est l'instrument de validation de l'acquisition. L'envoi des données prend du temps CPU et peut retarder l'échantillonnage : acquérir par buffers, puis envoyer. Un signal au-dessus de $f_e/2$ ne disparaît pas, il apparaît à une fréquence fausse ; seul un filtre analogique avant l'ADC l'empêche.
+\end{imp}

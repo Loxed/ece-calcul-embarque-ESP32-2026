@@ -1,0 +1,21 @@
+% diagrams/tp6/inverted_residual.tex : bloc résiduel inversé de MobileNetV2 ; seuls les canaux internes sont élagués
+\begin{tikzpicture}[
+    font=\sffamily\small, >=Stealth,
+    blk/.style={draw=ECE, thick, fill=ECE!10, rounded corners=2pt, minimum height=1.1cm, align=center, inner sep=4pt},
+    lbl/.style={font=\sffamily\scriptsize, text=black!70, align=center}
+]
+\node[blk, draw=black!50, fill=white] (x) {entrée\\$C$ canaux};
+\node[blk, right=1cm of x] (exp) {expansion\\$1 \times 1$};
+\node[blk, fill=gamboge!20, draw=gamboge, right=1.2cm of exp] (dw) {depthwise\\$3 \times 3$};
+\node[blk, right=1.2cm of dw] (proj) {projection\\$1 \times 1$ + BN};
+\node[circle, draw, thick, right=0.8cm of proj, inner sep=1pt] (add) {$+$};
+\node[blk, draw=black!50, fill=white, right=0.8cm of add] (y) {sortie\\$C$ canaux};
+\draw[->, thick] (x) -- (exp);
+\draw[->, thick, gamboge] (exp) -- node[above, lbl] {$h$ canaux} node[below, lbl] {internes} (dw);
+\draw[->, thick, gamboge] (dw) -- node[above, lbl] {$h$ canaux} node[below, lbl] {internes} (proj);
+\draw[->, thick] (proj) -- (add);
+\draw[->, thick] (add) -- (y);
+\draw[->, thick] (x.north) -- ++(0,0.7) -| node[pos=0.25, above, lbl] {connexion résiduelle : $C$ doit rester inchangé} (add.north);
+\node[lbl, below=0.35cm of dw, text=gamboge!80!black]
+    {pruning structuré : les $h$ canaux internes (en orange) passent de $h$ à $h'$ ; entrée et sortie gardent $C$ canaux};
+\end{tikzpicture}

@@ -1,0 +1,18 @@
+% diagrams/tp6/pruning_kinds.tex : pruning non structuré (zéros épars) contre structuré (lignes supprimées)
+\begin{tikzpicture}[font=\sffamily\small, >=Stealth, x=0.42cm, y=0.42cm]
+% Matrice d'origine 8x8
+\foreach \i in {0,...,7} \foreach \j in {0,...,7} \draw[black!40, fill=ECE!25] (\i,\j) rectangle ++(1,1);
+\node[below, align=center] at (4,-0.3) {poids d'origine\\$8 \times 8$};
+% Non structuré
+\begin{scope}[xshift=5.2cm]
+    \foreach \i in {0,...,7} \foreach \j in {0,...,7} \draw[black!40, fill=ECE!25] (\i,\j) rectangle ++(1,1);
+    \foreach \i/\j in {0/1,1/5,2/2,2/7,3/0,3/4,4/6,5/1,5/3,6/5,7/0,7/7,1/3,4/2,6/0,0/6,3/6,6/2,2/4,5/7,7/3,4/0,1/0,6/7,0/3,5/5}
+        \draw[black!40, fill=white] (\i,\j) rectangle ++(1,1);
+    \node[below, align=center] at (4,-0.3) {non structuré\\toujours $8 \times 8$, 40~\% de zéros};
+\end{scope}
+% Structuré
+\begin{scope}[xshift=10.4cm, yshift=0.84cm]
+    \foreach \i in {0,...,7} \foreach \j in {0,...,3} \draw[black!40, fill=ECE!25] (\i,\j) rectangle ++(1,1);
+    \node[below, align=center] at (4,-0.3) {structuré\\$4 \times 8$ : 4 canaux retirés};
+\end{scope}
+\end{tikzpicture}

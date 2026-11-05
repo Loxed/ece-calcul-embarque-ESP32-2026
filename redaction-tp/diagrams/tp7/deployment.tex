@@ -1,0 +1,25 @@
+% diagrams/tp7/deployment.tex : du modèle PyTorch à la classe affichée par la carte
+\begin{tikzpicture}[
+    font=\sffamily\small, >=Stealth,
+    pc/.style={draw=ECE, thick, fill=ECE!10, rounded corners=2pt, minimum height=1cm, minimum width=2.2cm, align=center, inner sep=4pt},
+    mcu/.style={pc, draw=gamboge, fill=gamboge!15},
+    lbl/.style={font=\sffamily\scriptsize, text=black!70, align=center}
+]
+\node[pc] (pt) {modèle PyTorch\\TP 5 et 6};
+\node[pc, right=0.9cm of pt] (onnx) {fichier ONNX\\vérifié (TP 6)};
+\node[pc, right=0.9cm of onnx] (conv) {outil de conversion\\du framework embarqué};
+\node[mcu, right=0.9cm of conv] (bin) {modèle embarqué\\en flash};
+\draw[->, thick] (pt) -- (onnx);
+\draw[->, thick] (onnx) -- (conv);
+\draw[->, thick] (conv) -- (bin);
+\node[mcu, below=1.1cm of pt] (cam) {caméra\\OV3660};
+\node[mcu, right=0.9cm of cam] (pre) {prétraitement\\redimension, normalisation};
+\node[mcu, right=0.9cm of pre] (inf) {inférence};
+\node[mcu, right=0.9cm of inf] (cls) {classe\\série ou LED RGB};
+\draw[->, thick] (cam) -- (pre);
+\draw[->, thick] (pre) -- (inf);
+\draw[->, thick] (inf) -- (cls);
+\draw[->, thick, dashed] (bin.south) -- ++(0,-0.4) -| (inf.north);
+\node[lbl, anchor=east] at ([xshift=-0.2cm]pt.west) {PC};
+\node[lbl, anchor=east] at ([xshift=-0.2cm]cam.west) {carte};
+\end{tikzpicture}

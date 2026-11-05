@@ -1,0 +1,21 @@
+% diagrams/tp4/transfer.tex : MobileNetV2 réutilisé, backbone gelé et nouvelle tête
+\begin{tikzpicture}[
+    font=\sffamily\small, >=Stealth,
+    blk/.style={draw=ECE, thick, fill=ECE!10, rounded corners=2pt, minimum height=1.2cm, align=center, inner sep=4pt},
+    frozen/.style={blk, draw=black!45, fill=black!8},
+    lbl/.style={font=\sffamily\scriptsize, text=black!70, align=center}
+]
+\node[blk, draw=black!50, fill=white] (img) {image\\$3 \times 96 \times 96$};
+\node[frozen, right=0.8cm of img, minimum width=3.4cm] (feat) {\texttt{features}\\15 premiers modules : gelés};
+\node[blk, right=0cm of feat, minimum width=2.2cm, fill=ECE!25] (last) {4 derniers\\modules};
+\node[frozen, right=0.8cm of last] (pool) {pooling\\1\,280 valeurs};
+\node[blk, fill=gamboge!25, draw=gamboge, right=0.8cm of pool] (head) {nouvelle tête\\Linear(1\,280, 4)};
+\draw[->, thick] (img) -- (feat);
+\draw[->, thick] (last) -- (pool);
+\draw[->, thick] (pool) -- (head);
+\draw[decorate, decoration={brace, amplitude=5pt, mirror}, thick, black!60]
+    (feat.south west) -- (pool.south east) node[midway, below=6pt, lbl]
+    {pré-entraîné sur ImageNet ; backbone gelé : sorties calculées une fois et mises en cache};
+\node[lbl, above=2pt of last] {dégelés au fine-tuning};
+\node[lbl, above=2pt of head] {entraînée dans tous les cas};
+\end{tikzpicture}

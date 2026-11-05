@@ -1,0 +1,60 @@
+% tps/tp5.tex : Compression : quantification
+% Notebook associé : edge-ai-toolchain/notebooks/compression/05_quantization.py
+
+\chapter{Compression : quantification}
+
+\section*{Motivation}
+
+Un modèle entraîné stocke ses poids en \texttt{float32}, 4 octets par paramètre. Les poids d'un réseau se concentrent autour de zéro, sur une plage étroite : 8 bits suffisent en général à les représenter avec une perte de précision faible. La quantification int8 divise la taille des poids par 4 et remplace les calculs flottants par des calculs entiers. L'ESP32-S3 dispose d'une unité de calcul flottant simple précision ; le gain en vitesse de l'int8 vient de la mémoire (4 fois moins d'octets à lire) et des instructions vectorielles 8 bits du processeur, exploitées par les bibliothèques d'inférence d'Espressif. Il se mesure au TP 7. Ce TP quantifie le MobileNetV2 du TP 4, d'abord après l'entraînement (PTQ, post-training quantization), puis pendant l'entraînement (QAT, quantization-aware training), et mesure ce que chacune coûte en précision. \\
+
+\begin{imp}
+Ce TP utilise le notebook \ToolchainLink{notebooks/compression/05_quantization.py}{\texttt{05\_quantization.py}}, qui part du modèle \texttt{models/cifar4\_mobilenetv2.pt} produit au TP 4. Les modèles int8 de PyTorch s'exécutent sur CPU (moteur \texttt{onednn} sous Windows) : les latences sont mesurées sur le CPU du PC, pas sur la carte. L'API \texttt{torch.ao.quantization} utilisée est en cours de remplacement par \texttt{torchao} ; pour la carte, la quantification finale passe par l'outil du framework embarqué (TP 7), sur le même principe.
+Les valeurs citées dans les encadrés "À retenir" ont été mesurées sur un PC portable (GPU NVIDIA RTX 5060 Laptop, PyTorch 2.11) ; sur une autre machine ou sur CPU, elles varient de quelques dixièmes de point, et les durées dépendent du matériel.
+\end{imp}
+
+\section{Quantification d'une couche à la main}
+
+La quantification affine \cite{jacob2018quantization} représente un réel $w$ par un entier $q$ sur 8 bits signés :
+\[
+q = \mathrm{clip}\left(\mathrm{round}\left(\frac{w}{s}\right) + z,\ -128,\ 127\right), \qquad \hat{w} = (q - z)\,s,
+\]
+où $s$ (\texttt{scale}) est le pas de quantification et $z$ (\texttt{zero\_point}) l'entier qui représente le réel 0. \\
+
+\TQ{Pour des valeurs dans $[w_{min}, w_{max}]$, exprimer $s$ et $z$ de façon à utiliser les 256 niveaux. Quelle est l'erreur maximale de reconstruction $|\hat{w} - w|$ ?}
+
+\begin{figure}[H]
+\centering
+\resizebox{0.78\linewidth}{!}{\input{diagrams/tp5/quantization}}
+\caption{Quantification affine : la plage réelle des poids est découpée en 256 niveaux de pas $s$ ; le réel 0 correspond à l'entier $z$.}
+\label{fig:tp5-quant}
+\end{figure}
+
+\EQ{Compléter \texttt{quantize\_per\_tensor\_numpy()} et l'appliquer aux poids de la couche \texttt{features[6].conv[2]}. Relever la plage des poids, $s$, $z$, l'erreur maximale et l'erreur moyenne. Vérifier que le résultat est identique à \texttt{torch.quantize\_per\_tensor()}.}
+
+\EQ{Tracer l'histogramme des poids de cette couche. Expliquer avec cet histogramme pourquoi 256 niveaux suffisent.}
+
+\EQ{Le notebook calcule aussi une quantification par canal (un $s$ par canal de sortie, symétrique). Comparer l'erreur moyenne à celle de la quantification par tenseur. Pourquoi est-elle plus faible ?}
+
+\section{Quantification après entraînement (PTQ)}
+
+La PTQ se déroule en trois étapes : \texttt{fuse\_model()} fusionne chaque convolution avec la BatchNorm et l'activation qui la suivent ; des observateurs enregistrent la plage des activations sur un jeu de calibration ; \texttt{convert()} remplace les couches par leurs versions int8. \\
+
+\TQ{Pourquoi peut-on fusionner une convolution et la BatchNorm qui la suit en une seule convolution, une fois l'entraînement terminé ? Quel gain en tire l'inférence ?}
+
+\TQ{Les poids sont connus après l'entraînement ; les activations dépendent de l'image d'entrée. Pourquoi la PTQ a-t-elle besoin d'un jeu de calibration ? D'où doivent venir ces images ?}
+
+\EQ{Quantifier le modèle avec 128 images de calibration. Relever taille, précision de test et latence CPU du modèle \texttt{float32} et du modèle int8. Calculer le rapport de taille. Pourquoi n'est-il pas exactement de 4 ?}
+
+\EQ{Le notebook refait la calibration avec 8 images, avec trois tirages différents de 128 images, puis avec 128 images d'une seule classe. Relever la précision de test dans chaque cas. Le jeu de test compte 400 images : de combien de points varie la précision quand une seule image change de classe ? Les écarts mesurés entre jeux de calibration sont-ils significatifs ?}
+
+\section{Entraînement avec quantification simulée (QAT)}
+
+La QAT insère dans le réseau des opérations "fake quant" qui arrondissent poids et activations comme le fera l'int8, tout en calculant en flottant. Le réseau, réentraîné quelques epochs, s'adapte à l'erreur de quantification. \\
+
+\EQ{Réentraîner le modèle 3 epochs en QAT (taux d'apprentissage $10^{-5}$, BatchNorm figées), puis le convertir en int8. Relever précision, taille et latence, et compléter le tableau de synthèse du notebook.}
+
+\TQ{Sur ce modèle, la QAT récupère une partie de la précision perdue par la PTQ. Combien de points, et pour quel coût en temps d'entraînement ? Dans quels cas la QAT devient-elle nécessaire ?}
+
+\begin{imp}
+\textbf{À retenir :} la PTQ int8 divise ici la taille du modèle par 3.5 (9.16~Mo à 2.65~Mo) pour 1.7 point de précision perdu (88.5~\% à 86.8~\%), sans réentraînement ; la QAT en récupère 0.4 (87.2~\%). Sur 400 images de test, une image vaut 0.25 point : un écart d'un point entre deux réglages reste à la limite de la mesure. Commencer par la PTQ ; ne passer à la QAT que si la perte mesurée est trop grande pour l'application.
+\end{imp}

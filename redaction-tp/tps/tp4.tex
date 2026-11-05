@@ -1,0 +1,74 @@
+% tps/tp4.tex : Petit dataset et transfer learning
+% Notebook associé : edge-ai-toolchain/notebooks/vision/04_transfer_learning.py
+
+\chapter{Petit dataset et transfer learning}
+
+\section*{Motivation}
+
+Un projet embarqué dispose rarement de millions d'images : un dataset construit à la main en compte quelques centaines. Avec si peu de données, un réseau entraîné depuis zéro apprend mal. Le transfer learning réutilise un réseau déjà entraîné sur un grand dataset généraliste (ImageNet, 1.2 million d'images) et n'adapte que sa fin au nouveau problème. Ce TP organise un petit dataset au format standard, compare un CNN entraîné depuis zéro à MobileNetV2 réutilisé, et mesure la taille du modèle obtenu face à la mémoire de l'ESP32-S3. \\
+
+Le dataset simule un dataset maison : 4 classes de CIFAR-10 (avion, voiture, bateau, camion), 150 images d'apprentissage, 50 de validation et 100 de test par classe. Les images CIFAR-10 font $32 \times 32$ pixels ; elles sont agrandies à $96 \times 96$, la taille d'entrée retenue, sans gagner de détail. Les précisions obtenues valent pour ce dataset et ne préjugent pas de celles d'un dataset pris avec une caméra. \\
+
+\begin{imp}
+Ce TP utilise le notebook \ToolchainLink{notebooks/vision/04_transfer_learning.py}{\texttt{04\_transfer\_learning.py}}. Le dataset (environ 150~Mo à télécharger au premier lancement) et les poids de MobileNetV2 (14~Mo) se téléchargent automatiquement. Le notebook sauvegarde le modèle final dans \texttt{models/cifar4\_mobilenetv2.pt}, point de départ des TP 5 et 6.
+Les valeurs citées dans les encadrés "À retenir" ont été mesurées sur un PC portable (GPU NVIDIA RTX 5060 Laptop, PyTorch 2.11) ; sur une autre machine ou sur CPU, elles varient de quelques dixièmes de point, et les durées dépendent du matériel.
+\end{imp}
+
+\section{Organisation d'un dataset image}
+
+Le format \texttt{ImageFolder} range les images dans un dossier par split (\texttt{train}, \texttt{val}, \texttt{test}), puis un sous-dossier par classe. \texttt{torchvision.datasets.ImageFolder} déduit les étiquettes des noms de dossiers. C'est le format à produire pour tout dataset maison, y compris celui du projet. \\
+
+\EQ{Relever le nombre d'images par split et par classe, et l'index attribué à chaque classe. Selon quelle règle \texttt{ImageFolder} numérote-t-il les classes ?}
+
+\TQ{À quoi sert le jeu de validation, en plus des jeux d'apprentissage et de test ? Quelle erreur commet-on en choisissant les hyperparamètres (nombre d'epochs, taux d'apprentissage) d'après la précision de test ?}
+
+\TQ{Dans un dataset maison, deux photos prises à une seconde d'intervalle sont presque identiques. Si l'une est en apprentissage et l'autre en test, que vaut la précision mesurée ? Comment découper un tel dataset pour éviter ce biais ?}
+
+\begin{imp}
+\textbf{À retenir :} trois jeux séparés avant tout entraînement. L'apprentissage ajuste les poids, la validation guide les choix de l'ingénieur, le test ne sert qu'une fois, à la fin, pour la mesure annoncée.
+\end{imp}
+
+\section{Référence : CNN entraîné depuis zéro}
+
+\EQ{Le notebook entraîne un petit CNN (trois convolutions, pooling global, une couche dense) pendant 30 epochs. Relever son nombre de paramètres, la précision de validation et la précision de test. Comparer au CNN du TP 3 sur FashionMNIST et expliquer l'écart.}
+
+\section{Transfer learning}
+
+\subsection{Backbone gelé}
+
+MobileNetV2 \cite{sandler2018mobilenetv2} se décompose en un extracteur de caractéristiques (\texttt{features} : une convolution d'entrée, 17 blocs résiduels inversés, une convolution $1 \times 1$ finale, soit 19 modules) et une tête de classification. La dernière couche (1\,000 classes ImageNet) est remplacée par une couche à 4 sorties ; tout le reste est gelé. \\
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{\input{diagrams/tp4/transfer}}
+\caption{Transfer learning : le backbone pré-entraîné est gelé, seule la nouvelle tête s'entraîne ; au fine-tuning, les 4 derniers modules sont dégelés.}
+\label{fig:tp4-transfer}
+\end{figure}
+
+\EQ{Relever le nombre de paramètres entraînés et le nombre total. Quelle fraction du réseau est entraînée ?}
+
+\EQ{Le backbone étant gelé, ses sorties (1\,280 valeurs par image) sont calculées une seule fois et mises en cache ; seule la tête s'entraîne sur ce cache. Relever la durée d'extraction et la durée d'entraînement de la tête. Pourquoi ce cache est-il impossible si l'augmentation de données est appliquée à chaque epoch ?}
+
+\EQ{Relever la précision de test du modèle à backbone gelé et la comparer au CNN depuis zéro.}
+
+\subsection{Fine-tuning}
+
+\EQ{Le notebook dégèle les 4 derniers modules de \texttt{features} (les 3 derniers blocs résiduels et la convolution finale) et les réentraîne 6 epochs avec un taux d'apprentissage de $10^{-4}$, deux fois : une fois avec les BatchNorm mises à jour, une fois avec les BatchNorm figées (\texttt{freeze\_bn=True}). Relever les deux précisions de test.}
+
+\TQ{Une couche BatchNorm normalise ses entrées avec une moyenne et une variance estimées pendant l'entraînement. Pourquoi les mettre à jour sur des batchs de 32 images d'un petit dataset dégrade-t-il un réseau pré-entraîné sur ImageNet ?}
+
+\begin{imp}
+\textbf{À retenir :} sur ce dataset, MobileNetV2 réutilisé atteint 84.5~\% backbone gelé et 88.8~\% après fine-tuning, contre 52~\% pour un CNN entraîné depuis zéro. Pour fine-tuner un réseau pré-entraîné sur peu de données : taux d'apprentissage faible et BatchNorm figées (75.5~\% sinon).
+\end{imp}
+
+\section{Évaluation et taille}
+
+\EQ{Relever la matrice de confusion du modèle fine-tuné. Quelles paires de classes sont le plus souvent confondues ? Afficher les images mal classées et proposer une explication.}
+
+\EQ{Le notebook réentraîne la tête (backbone gelé) avec 10, 25, 50, 100 puis 150 images par classe. Tracer la précision de test en fonction du nombre d'images. À partir de combien d'images par classe le gain devient-il faible ? Qu'en conclure pour la constitution d'un dataset maison ?}
+
+\EQ{Relever le nombre de paramètres, la taille en \texttt{float32} et la latence d'inférence sur le CPU du PC. Comparer la taille aux 512~Ko de SRAM et aux 8~Mo de PSRAM de la NeuroBoard-S3.}
+
+\begin{imp}
+\textbf{À retenir :} avec 25 images par classe, le backbone gelé atteint déjà 84~\% ; au-delà, le gain est faible sur ce problème. Le modèle obtenu pèse 8.9~Mo en \texttt{float32} : plus que toute la PSRAM de la carte. Les TP 5 et 6 le réduisent.
+\end{imp}

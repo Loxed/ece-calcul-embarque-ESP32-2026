@@ -147,11 +147,11 @@ Les \textbf{Timers/Counters} sont des périphériques matériels dédiés au com
 
 Le compteur n'avance pas nécessairement à chaque cycle de l'horloge du microcontrôleur. Un \textbf{prescaler} permet de diviser la fréquence de l'horloge avant qu'elle n'alimente le compteur. On peut ainsi choisir une fréquence de comptage adaptée au besoin. Par exemple, avec une fréquence de comptage de $1 MHz$, chaque incrément du compteur correspond à $1 \mu s$. Une alarme réglée à 1000 ticks déclenchera alors un événement toutes les $1ms$.\\
 
-Sur l'\textbf{ESP32-S3}, quatre timers matériels génériques sont disponibles. Ils utilisent des compteurs de \textbf{64 bits} et des prescalers de \textbf{16 bits}. Les timers peuvent fonctionner avec différentes sources d'horloge, notamment l'horloge APB ou l'oscillateur quartz de $40 MHz$. \\
+Sur l'\textbf{ESP32-S3}, quatre timers matériels génériques sont disponibles. Ils utilisent des compteurs de \textbf{54 bits} et des prescalers de \textbf{16 bits}. Les timers peuvent fonctionner avec différentes sources d'horloge, notamment l'horloge APB ou l'oscillateur quartz de $40 MHz$. \\
 
 Ces caractéristiques peuvent être retrouvées dans la documentation matérielle et dans le driver fourni par Espressif. L'intérêt est justement de ne pas avoir à manipuler directement les registres du timer : le driver permet d'accéder à ces fonctionnalités à travers une API.\\
 
-Avec \textbf{Arduino-ESP32}, cette configuration est fortement simplifiée. Par exemple, \texttt{timerBegin(1000000)} configure un timer avec une fréquence de comptage de $1,\mathrm{MHz}$. Une interruption peut ensuite être associée avec \texttt{timerAttachInterrupt()}, et une alarme avec \texttt{timerAlarm()}. Le paramètre d'alarme correspond alors directement au nombre de ticks avant le déclenchement. \cite{arduino_timer} \\
+Avec \textbf{Arduino-ESP32}, cette configuration est fortement simplifiée. Par exemple, \texttt{timerBegin(1000000)} configure un timer avec une fréquence de comptage de 1~MHz. Une interruption peut ensuite être associée avec \texttt{timerAttachInterrupt()}, et une alarme avec \texttt{timerAlarm()}. Le paramètre d'alarme correspond alors directement au nombre de ticks avant le déclenchement. \cite{arduino_timer} \\
 
 Avec \textbf{ESP-IDF}, on travaille à un niveau plus proche du matériel. Le driver \texttt{GPTimer} permet notamment de choisir la source d'horloge, la résolution du compteur, son sens de comptage, la valeur de l'alarme, l'auto-rechargement ainsi que certains paramètres liés à l'interruption. Il est également possible d'associer une callback à l'événement d'alarme. \cite{esp32s3_gptimer} \\
 
@@ -159,7 +159,7 @@ On retrouve donc ici la même organisation que pour les interruptions : \textbf{
 
 % {https://github.com/Loxed/ece-calcul-embarque-ESP32-2026/blob/main/tp0/code-snippets/esp32_timer_interrupt.ino}{}
 
-Un exemple complet est disponible dans la documentation officielle Arduino-ESP32 : \href{https://docs.espressif.com/projects/arduino-esp32/en/latest/api/timer.html}{$\texttt{Arduino\text{-}ESP32\ Timer\ API}$}. La documentation du driver GPTimer d'ESP-IDF détaille quant à elle la configuration matérielle accessible à travers ce niveau d'abstraction : \href{https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/gptimer.html}{$\texttt{ESP\text{-}IDF\ GPTimer}$}. \cite{arduino_timer,esp32s3_gptimer}\
+Un exemple complet est disponible dans la documentation officielle Arduino-ESP32 : \href{https://docs.espressif.com/projects/arduino-esp32/en/latest/api/timer.html}{\texttt{Arduino-ESP32 Timer API}}. La documentation du driver GPTimer d'ESP-IDF détaille quant à elle la configuration matérielle accessible à travers ce niveau d'abstraction : \href{https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/gptimer.html}{\texttt{ESP-IDF GPTimer}}. \cite{arduino_timer,esp32s3_gptimer}\
 
 
 \RepoLink{tp0/code-snippets/esp32_timer_interrupt.ino}{Code de l'interruption timer}
@@ -186,10 +186,6 @@ Un exemple complet est disponible dans la documentation officielle Arduino-ESP32
 
 
 
-
-
-
-\newpage
 
 
 

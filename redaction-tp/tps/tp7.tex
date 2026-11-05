@@ -1,0 +1,44 @@
+% tps/tp7.tex : Déploiement et benchmark sur l'ESP32-S3
+% Squelette : questions écrites, prose et code à faire.
+% Décision ouverte : framework embarqué (ESP-DL ou TFLite Micro).
+
+\chapter{Déploiement et benchmark sur l'ESP32-S3}
+
+\section*{Motivation}
+
+Le modèle compressé des TP 5 et 6 doit maintenant tourner sur la carte, sur des images de la caméra, dans les limites de mémoire et de temps de l'ESP32-S3. Ce TP convertit le modèle pour le moteur d'inférence embarqué, l'intègre dans un sketch Arduino-ESP32, et mesure ce qui compte pour l'application : latence, mémoire occupée, précision sur la carte. \\
+
+% TODO prose : moteur d'inférence retenu, utilisé en boîte noire ; chaîne image caméra -> prétraitement -> inférence -> classe.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\linewidth}{!}{\input{diagrams/tp7/deployment}}
+\caption{Chaîne de déploiement : conversion sur PC, puis capture, prétraitement et inférence sur la carte.}
+\label{fig:tp7-deploy}
+\end{figure}
+
+\section{Conversion et intégration}
+
+\EQ{Convertir le modèle ONNX du TP 6 avec l'outil du framework embarqué. Relever la taille du modèle converti et la comparer à celle du modèle int8 du TP 5.}
+
+\EQ{Intégrer le modèle dans le sketch fourni. Relever la mémoire occupée en flash, en SRAM et en PSRAM après compilation et au démarrage.}
+
+\TQ{Où placer les poids du modèle (flash, SRAM, PSRAM) et la mémoire de travail des activations ? Quel compromis entre capacité et vitesse d'accès ?}
+
+\begin{imp}
+\textbf{À retenir :} vérifier la taille du modèle converti et la mémoire libre avant d'écrire le reste du sketch. Un modèle qui ne tient pas en SRAM passe en PSRAM, plus lente : l'emplacement des poids et des activations fixe une partie de la latence.
+\end{imp}
+
+\section{Validation sur la carte}
+
+\EQ{Envoyer à la carte, par le port série, 50 images du jeu de test. Comparer les classes prédites par la carte à celles du modèle sur PC. Combien de prédictions diffèrent ?}
+
+\EQ{Mesurer avec \texttt{esp\_timer\_get\_time()} la durée du prétraitement de l'image et la durée de l'inférence, moyennées sur 100 images. Combien d'images par seconde la carte peut-elle classer ?}
+
+\EQ{Comparer latence et précision sur la carte pour le modèle \texttt{float32}, le modèle int8 et le modèle élagué et quantifié.}
+
+\EQ{Boucler capture, prétraitement, inférence et affichage de la classe sur le port série (ou par la LED RGB). Présenter devant la caméra des images imprimées des 4 classes et relever le taux de bonnes réponses sur 20 essais par classe. Comparer à la précision de test mesurée sur PC.}
+
+\begin{imp}
+\textbf{À retenir :} un modèle embarqué se valide sur la carte, avec des images de la caméra. La précision sur PC est une borne supérieure : prétraitement différent, éclairage et quantification la dégradent. Mesurer la latence de toute la chaîne, pas seulement celle de l'inférence.
+\end{imp}

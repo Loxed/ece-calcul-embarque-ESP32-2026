@@ -1,0 +1,29 @@
+% diagrams/tp2/convolution.tex : un noyau 3x3 glisse sur l'image ; chaque pixel de sortie est une somme pondérée
+\begin{tikzpicture}[font=\sffamily\small, >=Stealth, x=0.55cm, y=0.55cm]
+% Image d'entrée 7x7
+\foreach \i in {0,...,6} \foreach \j in {0,...,6}
+    \draw[black!40, fill=black!3] (\i,\j) rectangle ++(1,1);
+\fill[ECE!30] (2,2) rectangle (5,5);
+\draw[ECE, very thick] (2,2) rectangle (5,5);
+\fill[ECE!70] (3,3) rectangle (4,4);
+\node[below] at (3.5,-0.2) {image d'entrée};
+% Noyau 3x3
+\begin{scope}[xshift=5.2cm, yshift=1.1cm]
+    \foreach \i in {0,1,2} \foreach \j in {0,1,2}
+        \draw[gamboge, thick, fill=gamboge!15] (\i,\j) rectangle ++(1,1);
+    \node at (0.5,2.5) {$k_1$}; \node at (1.5,2.5) {$k_2$}; \node at (2.5,2.5) {$k_3$};
+    \node at (0.5,1.5) {$k_4$}; \node at (1.5,1.5) {$k_5$}; \node at (2.5,1.5) {$k_6$};
+    \node at (0.5,0.5) {$k_7$}; \node at (1.5,0.5) {$k_8$}; \node at (2.5,0.5) {$k_9$};
+    \node[below] at (1.5,-0.2) {noyau $3 \times 3$};
+\end{scope}
+% Image de sortie 5x5 (sans remplissage des bords)
+\begin{scope}[xshift=9.6cm, yshift=0.55cm]
+    \foreach \i in {0,...,4} \foreach \j in {0,...,4}
+        \draw[black!40, fill=black!3] (\i,\j) rectangle ++(1,1);
+    \fill[ECE!70] (2,2) rectangle (3,3);
+    \node[below] at (2.5,-0.2) {image de sortie};
+\end{scope}
+\draw[->, thick, ECE] (3.5,5) to[out=60, in=110] (9.6cm+2.5*0.55cm, 0.55cm+3*0.55cm);
+\node[ECE, align=center, font=\sffamily\scriptsize, fill=white, inner sep=1pt] at (6.3cm, 4.75cm)
+    {sortie $= \sum_{i=1}^{9} k_i \times$ pixel$_i$ du voisinage};
+\end{tikzpicture}

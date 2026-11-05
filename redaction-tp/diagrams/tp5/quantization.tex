@@ -1,0 +1,26 @@
+% diagrams/tp5/quantization.tex : correspondance entre l'axe réel et la grille int8
+\begin{tikzpicture}[font=\sffamily\small, >=Stealth]
+% Axe réel
+\draw[->, thick] (-0.5,1.8) -- (12.5,1.8) node[right] {réel $w$};
+\foreach \x/\t in {1/w_{min}, 4.2/0, 11/w_{max}} {
+    \draw[thick] (\x,1.65) -- (\x,1.95);
+    \node[above] at (\x,1.95) {$\t$};
+}
+% Grille entière
+\draw[->, thick] (-0.5,0) -- (12.5,0) node[right] {entier $q$};
+\foreach \k in {0,...,20} \draw (1+\k*0.5,-0.08) -- (1+\k*0.5,0.08);
+\node[below] at (1,-0.1) {$-128$};
+\node[below] at (4.2,-0.1) {$z$};
+\node[below] at (11,-0.1) {$127$};
+% Correspondances exactes
+\foreach \x in {1, 4.2, 11} \draw[->, ECE, thick] (\x,1.62) -- (\x,0.18);
+% Une valeur quelconque est arrondie au niveau le plus proche
+\draw[->, gamboge, thick] (7.3,1.62) -- (7.5,0.18);
+\node[gamboge!80!black, font=\sffamily\scriptsize, align=center] at (7.4,2.3) {valeur quelconque :\\arrondie au niveau le plus proche};
+\draw[gamboge, thick] (7.3,1.65) -- (7.3,1.95);
+% Pas de quantification
+\draw[decorate, decoration={brace, amplitude=3pt, mirror}, black!60] (2,-0.15) -- (2.5,-0.15)
+    node[midway, below=3pt, font=\sffamily\scriptsize, black!70] {pas $s$};
+\node[font=\sffamily\scriptsize, black!70, align=left, anchor=west] at (-0.4,-1.0)
+    {256 niveaux couvrent $[w_{min}, w_{max}]$ : $s = (w_{max} - w_{min}) / 255$ ; le réel 0 tombe exactement sur l'entier $z$.};
+\end{tikzpicture}

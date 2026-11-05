@@ -1,0 +1,18 @@
+% diagrams/tp3/training_loop.tex : une itération de la boucle d'entraînement PyTorch
+\begin{tikzpicture}[
+    font=\sffamily\small, >=Stealth,
+    blk/.style={draw=ECE, thick, fill=ECE!10, rounded corners=2pt, minimum height=1cm, align=center, inner sep=4pt},
+    code/.style={font=\ttfamily\scriptsize, text=black!75}
+]
+\node[blk] (batch) {batch\\$(x, y)$};
+\node[blk, right=0.9cm of batch] (model) {modèle\\\texttt{model(x)}};
+\node[blk, right=0.9cm of model] (loss) {loss\\\texttt{loss\_fn(logits, y)}};
+\node[blk, right=0.9cm of loss] (back) {gradients\\\texttt{loss.backward()}};
+\node[blk, fill=gamboge!20, draw=gamboge, right=0.9cm of back] (step) {mise à jour\\\texttt{optimizer.step()}};
+\draw[->, thick] (batch) -- (model);
+\draw[->, thick] (model) -- node[above, font=\sffamily\scriptsize] {logits} (loss);
+\draw[->, thick] (loss) -- (back);
+\draw[->, thick] (back) -- (step);
+\draw[->, thick, dashed] (step.south) -- ++(0,-0.6) -| node[pos=0.25, below, font=\sffamily\scriptsize]
+    {poids modifiés ; \texttt{optimizer.zero\_grad()} avant le batch suivant} (model.south);
+\end{tikzpicture}

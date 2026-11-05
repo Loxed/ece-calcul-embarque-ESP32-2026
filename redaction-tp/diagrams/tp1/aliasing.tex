@@ -1,0 +1,21 @@
+% diagrams/tp1/aliasing.tex : une sinusoïde de 5 kHz échantillonnée à 8 kHz se confond avec une de 3 kHz
+\begin{tikzpicture}
+\begin{axis}[
+    width=14cm, height=4.6cm,
+    xmin=0, xmax=1.0, ymin=-1.35, ymax=1.35,
+    xlabel={temps (ms)}, ylabel={amplitude},
+    xtick={0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1.0},
+    xticklabels={0,,0.25,,0.5,,0.75,,1},
+    ytick={-1,0,1},
+    tick label style={font=\sffamily\scriptsize}, label style={font=\sffamily\small},
+    legend style={font=\sffamily\scriptsize, at={(0.5,1.03)}, anchor=south, legend columns=3, draw=none},
+    axis lines=left, samples=400, domain=0:1.0,
+]
+\addplot[ECE, thick] {sin(deg(2*pi*5*x))};
+\addlegendentry{signal réel : 5 kHz}
+\addplot[gamboge, thick, dashed] {-sin(deg(2*pi*3*x))};
+\addlegendentry{ce que montrent les échantillons : 3 kHz}
+\addplot[only marks, mark=*, mark size=2.2pt, black, samples at={0,0.125,...,1.0}] {sin(deg(2*pi*5*x))};
+\addlegendentry{échantillons, $f_e$ = 8 kHz}
+\end{axis}
+\end{tikzpicture}

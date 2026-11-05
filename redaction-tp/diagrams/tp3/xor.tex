@@ -1,0 +1,16 @@
+% diagrams/tp3/xor.tex : les 4 points de XOR ; aucune droite ne sépare les sorties 0 et 1
+\begin{tikzpicture}[font=\sffamily\small, >=Stealth, x=1.9cm, y=1.9cm]
+\draw[->] (-0.25,0) -- (1.45,0) node[right] {$x_1$};
+\draw[->] (0,-0.25) -- (0,1.4) node[above] {$x_2$};
+\foreach \x/\y in {0/0, 1/1} {
+    \fill[ECE] (\x,\y) circle (2.2pt);
+    \node[below right, ECE, font=\sffamily\scriptsize] at (\x,\y) {(\x, \y) : 0};
+}
+\foreach \x/\y in {0/1, 1/0} {
+    \fill[gamboge] ([xshift=-2pt, yshift=-2pt]\x,\y) rectangle ([xshift=2pt, yshift=2pt]\x,\y);
+    \node[above right, gamboge!80!black, font=\sffamily\scriptsize] at (\x,\y) {(\x, \y) : 1};
+}
+\draw[black!45, dashed] (-0.15,0.35) -- (1.35,0.65);
+\node[black!60, font=\sffamily\scriptsize, align=left, anchor=west] at (1.5,0.6)
+    {toute droite laisse au moins\\un point du mauvais côté};
+\end{tikzpicture}

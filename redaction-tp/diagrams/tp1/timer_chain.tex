@@ -1,0 +1,18 @@
+% diagrams/tp1/timer_chain.tex : chaîne d'un timer générique (Timer Group) de l'ESP32-S3
+\begin{tikzpicture}[
+    font=\sffamily\small, >=Stealth,
+    blk/.style={draw=ECE, thick, fill=ECE!10, rounded corners=2pt, minimum height=1.1cm, align=center, inner sep=4pt},
+    lbl/.style={font=\sffamily\scriptsize, text=black!70, align=center}
+]
+\node[blk, minimum width=2.1cm] (clk) {Horloge\\APB 80~MHz};
+\node[blk, minimum width=2.3cm, right=1.1cm of clk] (div) {Diviseur\\(prescaler 16 bits)};
+\node[blk, minimum width=2.3cm, right=2.1cm of div] (cnt) {Compteur\\54 bits};
+\node[blk, minimum width=2.3cm, right=1.1cm of cnt] (cmp) {Comparateur\\$=$ \texttt{alarm\_count} ?};
+\node[blk, fill=gamboge!20, draw=gamboge, minimum width=2cm, right=1.1cm of cmp] (isr) {Interruption\\(ISR, callback)};
+
+\draw[->, thick] (clk) -- node[above, lbl] {$f_{source}$} (div);
+\draw[->, thick] (div) -- node[above, lbl] {\texttt{resolution\_hz}} node[below, lbl] {1 tick} (cnt);
+\draw[->, thick] (cnt) -- node[above, lbl] {valeur} (cmp);
+\draw[->, thick] (cmp) -- node[above, lbl] {alarme} (isr);
+\draw[->, thick, dashed] (cmp.south) -- ++(0,-0.6) -| node[pos=0.25, below, lbl] {auto-rechargement : compteur remis à 0} (cnt.south);
+\end{tikzpicture}

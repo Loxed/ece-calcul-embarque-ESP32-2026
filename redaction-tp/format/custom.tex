@@ -1,28 +1,90 @@
+% =====================================================================
+%  format/custom.tex — boîtes, questions et macros du polycopié
+% =====================================================================
+
 \usepackage[skins,most]{tcolorbox}
-\usetikzlibrary{calc,shadows.blur}
+\usetikzlibrary{calc,shadows.blur,decorations.pathreplacing}
 
-% % --- Couleurs spécifiques ---
-\definecolor{eceyellow}{rgb}{0.8,0.5,0}       
-\definecolor{ECE}{RGB}{0, 122, 123}       
+% --- Couleurs spécifiques ---
+\definecolor{eceyellow}{rgb}{0.8,0.5,0}
+\definecolor{ECE}{RGB}{0, 122, 123}
 
-% --- Compteurs pour les questions ---
-\newcounter{tqcounter}[chapter] % Réinitialisé à chaque chapitre
-\newcounter{eqcounter}[chapter] % Réinitialisé à chaque chapitre
+% =====================================================================
+%  RÉGLAGES DU RENDU DES QUESTIONS
+% =====================================================================
+%  Deux rendus pour la même sémantique :
+%
+%    \TQ{...}   \EQ{...}    rendu FILAIRE  (défaut) — questions enchaînées
+%    \TQ*{...}  \EQ*{...}   rendu ENCADRÉ            — question isolée à
+%                                                      mettre en valeur
+%
+%  Numérotation et couleurs identiques dans les deux cas : on peut
+%  passer de l'un à l'autre en ajoutant/retirant une étoile, sans rien
+%  casser.
+% =====================================================================
 
+% Police de l'énoncé en rendu filaire :
+%   \bfseries   → énoncé en gras (style « sujet de TP » classique)
+%   \normalfont → énoncé en romain, seul le numéro reste en gras
+%                 (plus lisible quand les énoncés font 3-4 lignes)
+\newcommand{\qfont}{\bfseries}
+
+% Couleurs des deux familles de questions
+\colorlet{TQcolor}{ECE}      % théorie      → T1, T2, ...
+\colorlet{EQcolor}{gamboge}  % pratique     → E1, E2, ...
+
+% --- Compteurs (réinitialisés à chaque chapitre) ---
+\newcounter{tqcounter}[chapter]
+\newcounter{eqcounter}[chapter]
+\renewcommand{\thetqcounter}{T\arabic{tqcounter}}
+\renewcommand{\theeqcounter}{E\arabic{eqcounter}}
+
+% --- Espacement autour d'une question filaire ---
+\newlength{\qskipbefore}\setlength{\qskipbefore}{1.6ex plus .4ex minus .2ex}
+\newlength{\qskipafter} \setlength{\qskipafter} {1.6ex plus .3ex}
+
+% Saut de paragraphe explicite (utile après un énoncé, une figure, etc.)
+\newcommand{\n}{\par\addvspace{\qskipbefore}\noindent}
+
+% Cœur du rendu filaire : #1 = label formaté, #2 = énoncé
+% (\long : l'énoncé peut contenir plusieurs paragraphes, un tableau, etc.)
+% Un filet vertical à la couleur de la famille (T ou E) borde la question à gauche :
+% il sépare visuellement l'énoncé du texte de contexte qui le suit.
+\newcommand{\qpar}[3]{%  #1 = couleur, #2 = label, #3 = énoncé
+    \par\addvspace{\qskipbefore}%
+    \begin{tcolorbox}[enhanced, breakable, blanker, left=7pt, top=1pt, bottom=1pt,
+                      borderline west={1.5pt}{0pt}{#1}, before skip=0pt, after skip=0pt]
+        \noindent\textcolor{#1}{#2}\hspace{0.5em}{\qfont #3}%
+    \end{tcolorbox}%
+    \par\addvspace{\qskipafter}%
+}
+
+% =====================================================================
+%  BOÎTES
+% =====================================================================
 % IMPORTANT BOX
 \newtcolorbox{imp}{
-    enhanced, arc=0mm, colback=yorhabg, colframe=mred, leftrule=10mm, coltext=yorhafg,
+    enhanced,
+    arc=0mm,
+    colback=yorhabg,
+    colframe=mred,
+    leftrule=10mm,
+    coltext=yorhafg,
     after skip=2em,
     overlay={
-        \node[anchor=west, outer sep=2pt] at (frame.west) {
-            \includegraphics[width=5mm]{images/exclaim.png}
+        \node[
+            anchor=west,
+            outer sep=2pt,
+            xshift=-2mm
+        ] at (frame.west) {
+            \includegraphics[width=10mm]{images/exclaim.png}
         };
     }
 }
 
 % SHORTCUT BOX
 \newtcolorbox{shortcut}{
-    enhanced, arc=0mm, colback=yorhabg, colframe=eceyellow, leftrule=1pt, 
+    enhanced, arc=0mm, colback=yorhabg, colframe=eceyellow, leftrule=1pt,
     coltext=yorhafg, coltitle=mwhite, title=\texttt{Astuce},
 }
 
@@ -42,10 +104,10 @@
             boxrule=0pt,
         },
         underlay boxed title={
-            \path[fill=tcbcolframe] 
-                (title.south west) -- (title.south east) 
-                to[out=0,in=180] ([xshift=5mm]title.east) -- 
-                (title.center-|frame.east) [rounded corners=5pt] |- 
+            \path[fill=tcbcolframe]
+                (title.south west) -- (title.south east)
+                to[out=0,in=180] ([xshift=5mm]title.east) --
+                (title.center-|frame.east) [rounded corners=5pt] |-
                 (frame.north) -| cycle;
         },
         before skip=0.8em,
@@ -53,28 +115,60 @@
     }
 }
 
-% QUESTION BOX (Libre, sans numérotation)
-\newtcolorbox{question}{
+% Cœur du rendu encadré : #1 = couleur, #2 = titre, #3 = énoncé
+\newcommand{\qboxed}[3]{%
+    \begin{tcolorbox}[qboxstyle, colframe=#1, title=\textbf{#2}]
+        #3
+    \end{tcolorbox}%
+}
+
+% QUESTION BOX libre, sans numérotation (ex-\begin{question})
+\newtcolorbox{questionbox}{
     qboxstyle,
-    colframe=ece,
+    colframe=ECE,
     title=\texttt{Question.},
 }
 
-% THÉORIE (Commande \TQ{content})
-\newcommand{\TQ}[1]{%
-    \stepcounter{tqcounter}%
-    \begin{tcolorbox}[qboxstyle, colframe=ECE, title=\textbf{T\arabic{tqcounter}.}]
-        #1
-    \end{tcolorbox}%
+% =====================================================================
+%  COMMANDES DE QUESTION
+% =====================================================================
+%  Syntaxe :  \TQ{énoncé}            filaire, numéroté T1, T2, ...
+%             \TQ*{énoncé}           encadré, même numérotation
+%             \TQ[clé]{énoncé}       pose un \label{clé} ; \ref{clé} → « T3 »
+%
+%  Idem pour \EQ (numérotation E1, E2, ...).
+% =====================================================================
+
+% THÉORIE
+\NewDocumentCommand{\TQ}{s O{} +m}{%
+    \refstepcounter{tqcounter}%
+    \ifblank{#2}{}{\label{#2}}%
+    \IfBooleanTF{#1}
+        {\qboxed{TQcolor}{\thetqcounter.}{#3}}
+        {\qpar{TQcolor}{\thetqcounter.}{#3}}%
 }
 
-% PRATIQUE (Commande \EQ{content})
-\newcommand{\EQ}[1]{%
-    \stepcounter{eqcounter}%
-    \begin{tcolorbox}[qboxstyle, colframe=gamboge, title=\textbf{E\arabic{eqcounter}.}]
-        #1
-    \end{tcolorbox}%
+% PRATIQUE
+\NewDocumentCommand{\EQ}{s O{} +m}{%
+    \refstepcounter{eqcounter}%
+    \ifblank{#2}{}{\label{#2}}%
+    \IfBooleanTF{#1}
+        {\qboxed{EQcolor}{\theeqcounter.}{#3}}
+        {\qpar{EQcolor}{\theeqcounter.}{#3}}%
 }
+
+% Question libre, non numérotée
+%   \question{énoncé}   filaire
+%   \question*{énoncé}  encadré (équivalent de \begin{questionbox})
+\NewDocumentCommand{\question}{s +m}{%
+    \IfBooleanTF{#1}
+        {\qboxed{ECE}{Question.}{#2}}
+        {\qpar{ECE}{Question.}{#2}}%
+}
+
+% =====================================================================
+%  MACROS DIVERSES
+% =====================================================================
 
 % Macros pédagogiques
 \newcommand{\bb}[1]{\textcolor{yorhafg}{\textbf{#1}}}
@@ -85,7 +179,6 @@
     \addtocontents{toc}{\protect\centerline{\LARGE\textbf{\textcolor{ECE}{--- #1 ---}}}}%
 }
 
-
 \usepackage{hyperref}
 
 % Github Repo
@@ -95,4 +188,13 @@
 % Génère un lien vers un fichier du dépôt
 \newcommand{\RepoLink}[2]{%
     \href{\RepoURL/blob/\RepoBranch/#1}{#2}%
+}
+
+% Dépôt des notebooks Python (edge-ai-toolchain)
+\newcommand{\ToolchainURL}{https://github.com/Loxed/edge-ai-toolchain}
+\newcommand{\ToolchainBranch}{main}
+
+% Génère un lien vers un fichier du dépôt des notebooks
+\newcommand{\ToolchainLink}[2]{%
+    \href{\ToolchainURL/blob/\ToolchainBranch/#1}{#2}%
 }

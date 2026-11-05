@@ -1,0 +1,120 @@
+% tps/tp3.tex : Réseaux de neurones avec PyTorch, du MLP au CNN
+% Notebook associé : edge-ai-toolchain/notebooks/vision/03_pytorch_mlp_cnn.py
+
+\chapter{Réseaux de neurones avec PyTorch}
+
+\section*{Motivation}
+
+Le projet de fin de module est un classifieur d'images qui tourne sur l'ESP32-S3. Ce TP pose le workflow d'entraînement utilisé dans toute la suite : charger un dataset, définir un modèle, l'entraîner, l'évaluer, le sauvegarder. Le point de vue est celui d'un ingénieur ML : les algorithmes d'optimisation sont fournis par PyTorch, le travail porte sur le choix du modèle, la lecture des métriques et les grandeurs qui comptent pour l'embarqué (nombre de paramètres, mémoire, latence). \\
+
+Le TP suit la structure du tutoriel officiel PyTorch \cite{pytorch}, sur le dataset FashionMNIST : 70\,000 images de vêtements de $28 \times 28$ pixels en niveaux de gris, réparties en 10 classes. \\
+
+\begin{imp}
+Ce TP utilise le notebook \ToolchainLink{notebooks/vision/03_pytorch_mlp_cnn.py}{\texttt{03\_pytorch\_mlp\_cnn.py}}. Lancer \texttt{marimo edit notebooks/vision/03\_pytorch\_mlp\_cnn.py}. FashionMNIST se télécharge au premier lancement (environ 30~Mo). Le notebook utilise le GPU s'il est disponible et termine en moins de 5 minutes sur CPU. Les cellules marquées \texttt{\# SOLUTION} sont à compléter ; celles dont la sortie commence par "Résultat" affichent les valeurs demandées.
+Les valeurs citées dans les encadrés "À retenir" ont été mesurées sur un PC portable (GPU NVIDIA RTX 5060 Laptop, PyTorch 2.11) ; sur une autre machine ou sur CPU, elles varient de quelques dixièmes de point, et les durées dépendent du matériel.
+\end{imp}
+
+\section{Pourquoi une couche cachée : XOR}
+
+La première cellule entraîne deux modèles sur les 4 lignes de la table de vérité de XOR : un modèle linéaire (une seule couche \texttt{nn.Linear(2, 1)}) et un MLP à 4 neurones cachés, $\{2, 4, 1\}$. \\
+
+\begin{figure}[H]
+\centering
+\input{diagrams/tp3/xor}
+\caption{Les quatre entrées de XOR : les sorties 0 et 1 ne sont séparables par aucune droite.}
+\label{fig:tp3-xor}
+\end{figure}
+
+\EQ{Relever la sortie des deux modèles pour les 4 entrées. Placer les 4 points de XOR dans le plan $(x_1, x_2)$ et expliquer pourquoi le modèle linéaire reste bloqué à 0.5.}
+
+\TQ{À quoi sert la fonction d'activation (\texttt{nn.Tanh()}) entre les deux couches du MLP ? Que deviendrait le MLP sans elle ?}
+
+\begin{imp}
+\textbf{À retenir :} une couche linéaire seule ne sépare que des classes séparables par une droite (un hyperplan en dimension quelconque). Une couche cachée suivie d'une activation non linéaire lève cette limite. Tous les modèles de la suite empilent des couches de ce type.
+\end{imp}
+
+\section{Données : \texttt{Dataset} et \texttt{DataLoader}}
+
+PyTorch sépare trois rôles. Un \texttt{Dataset} donne accès à un échantillon par son index : \texttt{train\_data[i]} renvoie le couple (image, étiquette). Une \texttt{transform}, appliquée à chaque accès, convertit l'image brute en tenseur ; ici \texttt{transforms.ToTensor()} produit un tenseur \texttt{float32} de forme $1 \times 28 \times 28$ à valeurs dans $[0, 1]$. Un \texttt{DataLoader} regroupe les échantillons en batchs (64 images ici), les mélange à chaque epoch si \texttt{shuffle=True}, et les fournit à la boucle d'entraînement. \\
+
+\EQ{Relever le nombre d'images d'apprentissage et de test, la forme et le type des tenseurs d'un batch, et le nombre de batchs par epoch. Que représente chacune des 4 dimensions du tenseur d'images ?}
+
+\TQ{Pourquoi mélanger les données d'apprentissage (\texttt{shuffle=True}) et pas les données de test ? Pourquoi les données de test ne servent-elles jamais à l'entraînement ?}
+
+\begin{imp}
+\textbf{À retenir :} un dataset se découpe en données d'apprentissage et de test avant tout entraînement. La précision qui compte est celle mesurée sur le test ; celle mesurée sur l'apprentissage ne dit rien de la capacité du modèle à traiter des images nouvelles.
+\end{imp}
+
+\section{Le MLP}
+
+\subsection{Modèle}
+
+Le MLP du notebook reprend celui du tutoriel PyTorch : \texttt{nn.Flatten()}, puis trois couches denses $784 \rightarrow 512 \rightarrow 512 \rightarrow 10$ séparées par des ReLU. La sortie donne 10 scores (logits), un par classe. \\
+
+\EQ{Calculer le nombre de paramètres du MLP couche par couche, et la mémoire qu'ils occupent en \texttt{float32}. Vérifier avec la valeur affichée. Ce modèle tient-il dans les 512~Ko de SRAM de l'ESP32-S3 ?}
+
+\subsection{Boucles d'entraînement et de test}
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{\input{diagrams/tp3/training_loop}}
+\caption{Une itération de la boucle d'entraînement, répétée pour chaque batch.}
+\label{fig:tp3-loop}
+\end{figure}
+
+\EQ{Compléter \texttt{train\_one\_epoch()} (cellule \texttt{\# SOLUTION}) : pour chaque batch, envoyer les données sur le device, calculer les logits, la loss (\texttt{nn.CrossEntropyLoss}), puis appeler dans l'ordre \texttt{optimizer.zero\_grad()}, \texttt{loss.backward()} et \texttt{optimizer.step()}. Compléter \texttt{evaluate()}, qui renvoie la précision sur un loader. Que se passe-t-il si \texttt{zero\_grad()} est oublié ?}
+
+\TQ{À quoi servent \texttt{model.train()}, \texttt{model.eval()} et le décorateur \texttt{@torch.no\_grad()} ? Lequel change le résultat du calcul, lequel change seulement son coût ? Pour le MLP de ce TP, qui n'a ni dropout ni BatchNorm, \texttt{train()} et \texttt{eval()} donnent-ils des sorties différentes ? Et pour le CNN avec dropout de la partie V ?}
+
+\EQ{Entraîner le MLP 3 epochs. Relever à chaque epoch la loss, la précision d'apprentissage et la précision de test, ainsi que la durée d'une epoch et le device utilisé.}
+
+\begin{imp}
+\textbf{À retenir :} la boucle d'entraînement tient en cinq lignes : propagation avant, loss, \texttt{zero\_grad()}, \texttt{backward()}, \texttt{step()}. Elle est la même pour tous les modèles du module ; seul le modèle change.
+\end{imp}
+
+\section{Le CNN}
+
+Le CNN du notebook enchaîne deux blocs (convolution $3 \times 3$, ReLU, max pooling $2 \times 2$), avec 16 puis 32 noyaux, puis une couche dense vers les 10 classes. Il s'entraîne avec la même fonction \texttt{fit()}. \\
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{\input{diagrams/tp3/cnn}}
+\caption{Architecture du CNN. Les formes intermédiaires sont à compléter (question suivante).}
+\label{fig:tp3-cnn}
+\end{figure}
+
+\EQ{Donner la forme du tenseur après chaque bloc pour une image $1 \times 28 \times 28$. Calculer le nombre de paramètres du CNN et le vérifier avec la valeur affichée.}
+
+\EQ{Remplir le tableau de comparaison affiché par le notebook : nombre de paramètres, taille en octets, précision de test, durée d'une epoch et latence d'inférence d'une image sur le CPU du PC, pour le MLP et le CNN. Lequel des deux retenir pour un microcontrôleur, et pourquoi ?}
+
+\EQ{Le notebook mesure aussi la durée d'une epoch du CNN sur CPU. Comparer à la durée sur GPU. Le gain est faible : quelle étape de la boucle limite ici la vitesse, et comment le vérifier ?}
+
+\EQ{Afficher la matrice de confusion du CNN. Quelle paire de classes est la plus souvent confondue ? Est-ce une erreur que ferait aussi un humain sur des images $28 \times 28$ ?}
+
+\begin{imp}
+\textbf{À retenir :} sur FashionMNIST, le CNN fait mieux que le MLP (88.7~\% contre 86.9~\%) avec 33 fois moins de paramètres (20\,490 contre 669\,706, soit 82~Ko contre 2.7~Mo en \texttt{float32}). Pour une entrée image, le CNN est le choix par défaut. La précision seule ne suffit pas à choisir un modèle embarqué : toujours relever aussi taille et latence.
+\end{imp}
+
+\section{Surapprentissage sur un petit dataset}
+
+Le dataset du projet, constitué avec la caméra de l'ESP32-S3, comptera quelques centaines d'images. Le notebook simule ce cas avec 600 images d'apprentissage et entraîne trois versions du CNN pendant 30 epochs : sans régularisation, avec dropout (\texttt{nn.Dropout(0.5)} avant la couche dense), et avec dropout et augmentation de données (\texttt{transforms.RandomAffine} : rotations de $10^\circ$ et décalages de 10~\%). \\
+
+\EQ{Relever pour les trois versions la précision d'apprentissage, la précision de test et leur écart. Quelle version surapprend le plus ? Laquelle pas du tout ?}
+
+\EQ{Avec l'augmentation, la précision de test est plus basse après 30 epochs. Relancer cette version avec 60 puis 100 epochs (paramètre \texttt{epochs=30} de l'appel à \texttt{fit()} dans la cellule du surapprentissage). Qu'en conclure sur le coût de l'augmentation de données en temps d'entraînement ?}
+
+\TQ{Pour le dataset de composants du projet (résistances, LED, IMU photographiés par la caméra), quelles transformations d'augmentation ont un sens ? Lesquelles produiraient des images impossibles et sont à éviter ?}
+
+\begin{imp}
+\textbf{À retenir :} avec 600 images, le CNN atteint 92~\% sur l'apprentissage et 80~\% sur le test. Un écart de plus de quelques points entre les deux signale un surapprentissage. Dropout et augmentation réduisent cet écart mais allongent l'entraînement. Le remède le plus efficace reste d'ajouter des images.
+\end{imp}
+
+\section{Sauvegarde du modèle}
+
+\EQ{Le notebook sauvegarde le \texttt{state\_dict} du CNN dans \texttt{models/fashion\_cnn.pt}, le recharge dans un nouveau modèle et compare les sorties. Relever la taille du fichier et la comparer à la taille des paramètres. Pourquoi faut-il la classe \texttt{CNN} pour recharger le fichier ?}
+
+\TQ{Pour exécuter ce modèle sur l'ESP32-S3, que faut-il embarquer : le fichier \texttt{.pt}, le code Python, les poids seuls ? Quelles opérations le microcontrôleur doit-il savoir exécuter ? (Ces questions sont traitées aux TP 5 à 7.)}
+
+\begin{imp}
+\textbf{À retenir :} un modèle entraîné se réduit à une architecture (du code) et à des poids (des nombres). Seuls les poids changent à l'entraînement ; c'est eux que les TP de compression réduisent et que le déploiement copie sur la carte.
+\end{imp}

@@ -1,8 +1,8 @@
 % --- Encodage & Langue ---
-\usepackage[french]{babel}  
+\usepackage[french]{babel}
 \usepackage[useregional]{datetime2}
-\usepackage[T1]{fontenc} 
-\usepackage{helvet} 
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
 
 % --- Mathématiques ---
 \usepackage{amsmath, amssymb, mathrsfs, esint, siunitx, eurosym, mathtools, cancel}
@@ -15,11 +15,11 @@
 \sethlcolor{yellow}
 
 \definecolor{darkpowderblue}{rgb}{0.0, 0.2, 0.6}
-\definecolor{ECE}{RGB}{0, 122, 123}       
-\definecolor{gamboge}{rgb}{0.89, 0.61, 0.06} 
-\definecolor{yorhabg}{HTML}{F5F5F4}       
-\definecolor{yorhafg}{HTML}{131314}       
-\definecolor{mred}{HTML}{B23B33}          
+\definecolor{ECE}{RGB}{0, 122, 123}
+\definecolor{gamboge}{rgb}{0.89, 0.61, 0.06}
+\definecolor{yorhabg}{HTML}{F5F5F4}
+\definecolor{yorhafg}{HTML}{131314}
+\definecolor{mred}{HTML}{B23B33}
 \definecolor{mwhite}{HTML}{FFFFFF}
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -47,7 +47,6 @@
 \renewcommand{\thesection}{\textcolor{ECE}{\Roman{section}.}}
 \renewcommand{\thesubsection}{\textcolor{ECE}{\Alph{subsection}.}}
 \renewcommand{\thesubsubsection}{\textcolor{ECE}{(\alph{subsubsection})}}
-\renewcommand{\theparagraph}{T\arabic{paragraph}.}
 
 \titleformat{\section}{\color{ECE}\normalfont\LARGE\bfseries}{\thesection}{1em}{}
 \titleformat{\subsection}{\color{ECE}\normalfont\Large\bfseries}{\thesubsection}{1em}{}
@@ -63,6 +62,7 @@
 \usepackage[Lenny]{fncychap}
 \usepackage{etoolbox}
 
+\usepackage{tabularx}
 \makeatletter
 \renewcommand{\@chapapp}{TP n$^{\text{o}}$ }
 
@@ -129,7 +129,7 @@
 % --- TOC ---
 \usepackage{tocloft}
 \renewcommand{\cftchappresnum}{TP }
-\setlength{\cftchapnumwidth}{3em} 
+\setlength{\cftchapnumwidth}{3em}
 \renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftchappagefont}{\normalfont p.\ }
 \setcounter{secnumdepth}{3}
@@ -145,3 +145,31 @@
 \newcommand*\rfrac[2]{{}^{#1}\!/_{#2}}
 \newcommand{\email}[1]{\href{mailto:#1}{\nolinkurl{#1}}}
 \urlstyle{sf}
+
+% --- Bibliographie (BibTeX), imprimée en fin de livret ---
+\bibliographystyle{unsrt}
+\AtEndDocument{\bibliography{format/refs}}
+
+% --- Lignes trop longues : plutot un peu plus d'espace entre les mots qu'un debordement dans la marge ---
+\setlength{\emergencystretch}{2em}
+
+% --- Pas de titre isole en bas de page ---
+% Avant une section, il doit rester au moins 12 lignes sur la page (titre + debut du contenu) ;
+% avant une sous-section, au moins 6. Sinon le titre passe a la page suivante.
+% \needspace (paquet needspace) n'est pas utilise : il insere une penalite de -100 qui, avec
+% \raggedbottom (actif d'office en book/oneside), fait couper la page a chaque titre et cree des trous.
+% \needlines ne coupe que si la place manque vraiment.
+\makeatletter
+\newcommand{\needlines}[1]{%
+    \par
+    \begingroup
+    \setlength{\dimen@}{#1}%
+    \dimen@ii\pagegoal \advance\dimen@ii-\pagetotal
+    \ifdim\dimen@>\dimen@ii
+        \ifdim\dimen@ii>\z@ \vfil \fi
+        \penalty-\@M
+    \fi
+    \endgroup}
+\makeatother
+\pretocmd{\section}{\needlines{12\baselineskip}}{}{}
+\pretocmd{\subsection}{\needlines{6\baselineskip}}{}{}
