@@ -89,14 +89,11 @@ La différence entre les deux approches est donc principalement le niveau auquel
 Les exemples présentés ci-dessous permettent de comparer ces trois niveaux de programmation :
 
 \begin{center}
-\href{https://github.com/Loxed/ece-calcul-embarque-ESP32-2026/blob/main/tp0/code-snippets/button_polling.ino}
-{$\texttt{button\_polling.ino}$}
+\RepoLink{tp0/code-snippets/uno_button_polling.ino}{\texttt{uno\_button\_polling.ino}}
 \qquad
-\href{https://github.com/Loxed/ece-calcul-embarque-ESP32-2026/blob/main/tp0/code-snippets/button_interrupt_registers.ino}
-{$\texttt{button\_interrupt\_registers.ino}$}
+\RepoLink{tp0/code-snippets/uno_button_interrupt.ino}{\texttt{uno\_button\_interrupt.ino}}
 \qquad
-\href{https://github.com/Loxed/ece-calcul-embarque-ESP32-2026/blob/main/tp0/code-snippets/button_interrupt_abstraction.ino}
-{$\texttt{button\_interrupt\_abstraction.ino}$}
+\RepoLink{tp0/code-snippets/uno_button_interrupt_abstraction.ino}{\texttt{uno\_button\_interrupt\_abstraction.ino}}
 \end{center}
 
 
@@ -311,7 +308,7 @@ Dans ce code, la DMA n'est jamais configurée explicitement. C'est la fonction \
 
 Un exemple complet est disponible dans la documentation officielle Arduino-ESP32 : \href{https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html}{\texttt{Arduino-ESP32 ADC API}}. La documentation du driver ADC continu d'ESP-IDF détaille quant à elle les options de configuration plus avancées : \href{https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/adc_continuous.html}{\texttt{ESP-IDF ADC Continuous Mode Driver}}. \cite{arduino_adc,esp32s3_adc_continuous}
 
-\RepoLink{tp0/code-snippets/esp32\_adc\_continuous.ino}{Code de l'acquisition ADC continue}
+\RepoLink{tp0/code-snippets/esp32_adc_continuous.ino}{Code de l'acquisition ADC continue}
 
 \section{Fonctionnement de la DMA}
 
