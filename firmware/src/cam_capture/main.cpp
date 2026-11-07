@@ -45,6 +45,14 @@ static bool init_camera(pixformat_t fmt, framesize_t size) {
         Serial.printf("# init camera echouee : 0x%x\n", err);
         return false;
     }
+    // Chauffe : l'exposition et la balance des blancs automatiques mettent plusieurs images a converger
+    // (mesure : en RGB565, la luminosite moyenne passe de 48 a 70 sur 255 en 8 images).
+    for (int i = 0; i < 15; i++) {
+        camera_fb_t *fb = esp_camera_fb_get();
+        if (fb) {
+            esp_camera_fb_return(fb);
+        }
+    }
     sensor_t *s = esp_camera_sensor_get();
     Serial.printf("# camera prete, capteur PID 0x%x, format %d, taille %d\n", s ? s->id.PID : 0, fmt, size);
     return true;
